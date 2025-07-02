@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin & Win - Blockchain Çarkıfelek</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            background: linear-gradient(45deg, #FFD700, #FFA500, #FF6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .wallet-section {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        .connect-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 107, 107, 0.6);
+        }
+
+        .connect-btn.connected {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            transition: transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wheel-segment:nth-child(1) { background: #FF0000; transform: rotate(0deg); }
+        .wheel-segment:nth-child(2) { background: #333333; transform: rotate(36deg); }
+        .wheel-segment:nth-child(3) { background: #FF0000; transform: rotate(72deg); }
+        .wheel-segment:nth-child(4) { background: #4CAF50; transform: rotate(108deg); }
+        .wheel-segment:nth-child(5) { background: #2196F3; transform: rotate(144deg); }
+        .wheel-segment:nth-child(6) { background: #9C27B0; transform: rotate(180deg); }
+        .wheel-segment:nth-child(7) { background: #FF9800; transform: rotate(216deg); }
+        .wheel-segment:nth-child(8) { background: #333333; transform: rotate(252deg); }
+        .wheel-segment:nth-child(9) { background: #00BCD4; transform: rotate(288deg); }
+        .wheel-segment:nth-child(10) { background: #FFD700; transform: rotate(324deg); }
+
+        .wheel-label {
+            position: absolute;
+            transform: rotate(-18deg) translateX(100px);
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        .wheel-label .percentage {
+            font-size: 1.2rem;
+            display: block;
+        }
+
+        .wheel-label .eth-amount {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 60px solid #FFD700;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+            z-index: 10;
+        }
+
+        .controls {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .pool-info {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .pool-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 10px 0;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .spin-controls {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .spin-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .spin-input {
+            width: 80px;
+            padding: 10px;
+            font-size: 1.2rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .spin-adjust-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .spin-adjust-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .quick-select {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #FFD700;
+        }
+
+        .cost-display {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .cost-amount {
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        .spin-btn {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #1a1a1a;
+            border: none;
+            padding: 20px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .claim-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .claim-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .dynamic-prizes {
+            margin-top: 20px;
+        }
+
+        .prize-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .prize-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .prize-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .prize-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prize-value {
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .results-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .results-content {
+            background: linear-gradient(135deg, #1a1a3e, #2d2d5e);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-summary {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .results-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-item.win {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+        }
+
+        .result-item.lose {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.2);
+        }
+
+        .close-modal {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 5px solid #4CAF50;
+        }
+
+        .notification.error {
+            border-left: 5px solid #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 SPIN & WIN</h1>
+            <p>Havuz büyüdükçe ödüller artar!</p>
+        </div>
+
+        <div class="wallet-section">
+            <button id="connectBtn" class="connect-btn">MetaMask Bağlan</button>
+            <p id="walletAddress" style="margin-top: 10px; opacity: 0.7;"></p>
+        </div>
+
+        <div class="game-container">
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <div id="wheel" class="wheel">
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">LOSE</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">LOSE</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">LOSE</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">5%</span>
+                            <span class="eth-amount" id="prize3">0 ETH</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">10%</span>
+                            <span class="eth-amount" id="prize4">0 ETH</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">15%</span>
+                            <span class="eth-amount" id="prize5">0 ETH</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">20%</span>
+                            <span class="eth-amount" id="prize6">0 ETH</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">LOSE</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">30%</span>
+                            <span class="eth-amount" id="prize8">0 ETH</span>
+                        </div>
+                    </div>
+                    <div class="wheel-segment">
+                        <div class="wheel-label">
+                            <span class="percentage">50% 🎯</span>
+                            <span class="eth-amount" id="prize9">0 ETH</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="pool-info">
+                    <h3>🏆 ÖDÜL HAVUZU</h3>
+                    <div class="pool-amount pulse" id="prizePool">0 ETH</div>
+                    <p style="opacity: 0.8; font-size: 0.9rem;">Havuz büyüdükçe ödüller artar!</p>
+                </div>
+
+                <div class="spin-controls">
+                    <h3 style="text-align: center; margin-bottom: 15px;">Spin Sayısı</h3>
+                    
+                    <div class="quick-select">
+                        <button class="quick-btn" onclick="setSpinCount(1)">1x</button>
+                        <button class="quick-btn" onclick="setSpinCount(5)">5x</button>
+                        <button class="quick-btn" onclick="setSpinCount(10)">10x</button>
+                        <button class="quick-btn" onclick="setSpinCount(25)">25x</button>
+                        <button class="quick-btn" onclick="setSpinCount(50)">50x</button>
+                    </div>
+
+                    <div class="spin-input-group">
+                        <button class="spin-adjust-btn" onclick="adjustSpinCount(-1)">−</button>
+                        <input type="number" id="spinCount" class="spin-input" value="1" min="1" max="100">
+                        <button class="spin-adjust-btn" onclick="adjustSpinCount(1)">+</button>
+                    </div>
+
+                    <div class="cost-display">
+                        Toplam Maliyet:
