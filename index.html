@@ -584,6 +584,12 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        .wheel-segment.highlight {
+            box-shadow: 0 0 30px 10px #FFD700, 0 0 10px 2px #fff;
+            border: 3px solid #FFD700;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -1245,7 +1251,6 @@
         // Spin function
         async function spin() {
             if (isSpinning || !contract) return;
-            
             try {
                 isSpinning = true;
                 const spinBtn = document.getElementById('spinBtn');
@@ -1257,27 +1262,14 @@
                 const cost = await contract.calculateSpinCost(spinCount);
 
                 // Send transaction
-                
                 const tx = await contract.spin(spinCount, { value: cost });
-
-                
-
-                
                 spinBtn.textContent = 'Confirming...';
                 showNotification('Transaction sent! Waiting for confirmation...', 'info');
-                
-                // Wait for transaction
                 await tx.wait();
-                
                 spinBtn.textContent = 'Waiting for VRF...';
                 showNotification('Transaction confirmed! Waiting for random number...', 'info');
-                
-                // Start spinning animation
                 startSpinAnimation();
-                
-                // Update data while waiting
                 await updateAllData();
-
             } catch (error) {
                 console.error('Spin error:', error);
                 showNotification('Spin failed: ' + error.message, 'error');
@@ -1300,33 +1292,19 @@
         // Handle spin result
         async function handleSpinResult(requestId, spinCount, totalPrize, wheelPositions, prizes) {
             const requestIdStr = requestId.toString();
-            
             if (!pendingSpins.has(requestIdStr)) return;
-            
             pendingSpins.delete(requestIdStr);
-            
-            // Stop continuous animation and animate to final position
             const wheel = document.getElementById('wheel');
             wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            
-            // For multiple spins, show the last position
             const finalPosition = Number(wheelPositions[wheelPositions.length - 1]);
             animateWheel(finalPosition);
-            
-            // Show results after animation
             setTimeout(() => {
+                highlightSegment(finalPosition);
                 const totalWon = ethers.formatEther(totalPrize);
                 const wins = prizes.filter(p => p > 0n).length;
-                
-                // Show result modal
                 showResultModal(spinCount, wins, totalWon);
-                
-                // Reset UI
                 resetSpinButton();
-                
-                // Update all data
                 updateAllData();
-                
             }, 4000);
         }
 
@@ -1402,7 +1380,6 @@
         // Update all data
         async function updateAllData() {
             if (!contract || !userAddress) return;
-            
             try {
                 let userData;
                 try {
@@ -1447,15 +1424,14 @@
                 document.getElementById('prizePool').textContent = ethers.formatEther(prizePool);
 
                 // Update prize displays
-                const prizeIndices = [3, 4, 5, 6, 8, 9];
-                prizeIndices.forEach(i => {
-                    const prizeElement = document.getElementById(`prize${i}`);
-                    const dynamicElement = document.getElementById(`dynamicPrize${i}`);
-                    const amount = ethers.formatEther(currentPrizes[i]);
-                    
-                    if (prizeElement) prizeElement.textContent = amount;
-                    if (dynamicElement) dynamicElement.textContent = amount;
-                });
+                if (currentPrizes) {
+                    for (let i = 0; i < currentPrizes.length; i++) {
+                        const prizeElement = document.getElementById(`prize${i}`);
+                        if (prizeElement) {
+                            prizeElement.textContent = ethers.formatEther(currentPrizes[i]) + ' ETH';
+                        }
+                    }
+                }
 
             } catch (error) {
                 console.error('Update error:', error);
@@ -1471,6 +1447,15 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 5000);
+        }
+
+        // Highlight segment
+        function highlightSegment(position) {
+            document.querySelectorAll('.wheel-segment').forEach(seg => seg.classList.remove('highlight'));
+            const segments = document.querySelectorAll('.wheel-segment');
+            if (segments[position]) {
+                segments[position].classList.add('highlight');
+            }
         }
     </script>
 </body>
