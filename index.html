@@ -1038,7 +1038,9 @@
 
                 // Send transaction
                 const cost = await contract.calculateSpinCost(spinCount);
-                const tx = await contract.spin(spinCount, { value: ethers.BigNumber.from(cost.toString()) });
+                const tx = await contract.spin(spinCount, { value: cost });
+
+                
 
                 
                 spinBtn.textContent = 'Confirming...';
