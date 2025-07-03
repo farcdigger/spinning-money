@@ -810,7 +810,7 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Base Mainnet Configuration
+        // Sepolia Configuration
         const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
         const SEPOLIA_RPC = 'https://ethereum-sepolia-rpc.publicnode.com';
         
@@ -829,7 +829,7 @@
         ];
 
         // Contract address - UPDATE THIS AFTER DEPLOYMENT
-        const contractAddress = "0xe2523b54d1503768dd2e2325941e1dc0115c2cb1"; // Base Mainnet'e deploy edildi
+        const contractAddress = "0xe2523b54d1503768dd2e2325941e1dc0115c2cb1"; // Sepolia'ya deploy edilen adres
 
         let provider;
         let signer;
@@ -865,43 +865,39 @@
                     return;
                 }
 
-                // Request account access
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
-                
-                // Check if on Base Mainnet
+
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                
+
                 if (chainId !== SEPOLIA_CHAIN_ID) {
-                    // Switch to Base Mainnet
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: SEPOLIA_CHAIN_ID }],
                         });
                     } catch (switchError) {
-                        // This error code indicates that the chain has not been added to MetaMask
                         if (switchError.code === 4902) {
                             try {
                                 await window.ethereum.request({
                                     method: 'wallet_addEthereumChain',
                                     params: [{
                                         chainId: SEPOLIA_CHAIN_ID,
-                                        chainName: 'Base',
+                                        chainName: 'Sepolia',
                                         nativeCurrency: {
                                             name: 'Ethereum',
                                             symbol: 'ETH',
                                             decimals: 18
                                         },
                                         rpcUrls: [SEPOLIA_RPC],
-                                        blockExplorerUrls: ['https://basescan.org/']
+                                        blockExplorerUrls: ['https://sepolia.etherscan.io/']
                                     }],
                                 });
                             } catch (addError) {
-                                showNotification('Failed to add Base network', 'error');
+                                showNotification('Failed to add Sepolia network', 'error');
                                 return;
                             }
                         } else {
-                            showNotification('Failed to switch to Base network', 'error');
+                            showNotification('Failed to switch to Sepolia network', 'error');
                             return;
                         }
                     }
@@ -927,7 +923,7 @@
                 // Load initial data
                 await updateAllData();
 
-                showNotification('Wallet connected to Base!', 'success');
+                showNotification('Wallet connected to Sepolia!', 'success');
 
                 // Auto-update data every 5 seconds
                 setInterval(updateAllData, 5000);
@@ -1184,23 +1180,38 @@
             if (!contract || !userAddress) return;
             
             try {
-                // Get user data
-                const userData = await contract.getUserData(userAddress);
-                const [pendingReward, totalWins, totalSpins, totalWagered, totalClaimed, winRate] = userData;
+                let userData;
+                try {
+                    userData = await contract.getUserData(userAddress);
+                } catch (e) {
+                    console.error('getUserData error:', e);
+                }
+                let prizePool;
+                try {
+                    prizePool = await contract.prizePool();
+                } catch (e) {
+                    console.error('prizePool error:', e);
+                }
+                let currentPrizes;
+                try {
+                    currentPrizes = await contract.getCurrentPrizes();
+                } catch (e) {
+                    console.error('getCurrentPrizes error:', e);
+                }
 
                 // Update user stats
-                document.getElementById('totalSpins').textContent = totalSpins.toString();
-                document.getElementById('totalWins').textContent = totalWins.toString();
-                document.getElementById('winRate').textContent = winRate.toString() + '%';
-                document.getElementById('totalWagered').textContent = formatEther(totalWagered);
-                document.getElementById('totalClaimed').textContent = formatEther(totalClaimed);
+                document.getElementById('totalSpins').textContent = userData[0].toString();
+                document.getElementById('totalWins').textContent = userData[1].toString();
+                document.getElementById('winRate').textContent = (userData[5] * 100).toFixed(2) + '%';
+                document.getElementById('totalWagered').textContent = ethers.formatEther(userData[3]);
+                document.getElementById('totalClaimed').textContent = ethers.formatEther(userData[4]);
 
                 // Update pending rewards
-                const pendingEth = ethers.formatEther(pendingReward);
+                const pendingEth = ethers.formatEther(userData[0]);
                 document.getElementById('pendingReward').textContent = pendingEth + ' ETH';
                 
                 // Show/hide claim section
-                if (pendingReward > 0n) {
+                if (userData[0] > 0n) {
                     document.getElementById('claimSection').style.display = 'block';
                     document.getElementById('noRewardsText').style.display = 'none';
                 } else {
@@ -1208,19 +1219,15 @@
                     document.getElementById('noRewardsText').style.display = 'block';
                 }
 
-                // Get contract data
-                const prizePool = await contract.prizePool();
-                const currentPrizes = await contract.getCurrentPrizes();
-
                 // Update pool display
-                document.getElementById('prizePool').textContent = formatEther(prizePool);
+                document.getElementById('prizePool').textContent = ethers.formatEther(prizePool);
 
                 // Update prize displays
                 const prizeIndices = [3, 4, 5, 6, 8, 9];
                 prizeIndices.forEach(i => {
                     const prizeElement = document.getElementById(`prize${i}`);
                     const dynamicElement = document.getElementById(`dynamicPrize${i}`);
-                    const amount = formatEther(currentPrizes[i]);
+                    const amount = ethers.formatEther(currentPrizes[i]);
                     
                     if (prizeElement) prizeElement.textContent = amount;
                     if (dynamicElement) dynamicElement.textContent = amount;
@@ -1229,16 +1236,6 @@
             } catch (error) {
                 console.error('Update error:', error);
             }
-        }
-
-        // Format ether with better display
-        function formatEther(value) {
-            const eth = ethers.formatEther(value);
-            const num = parseFloat(eth);
-            if (num === 0) return '0 ETH';
-            if (num < 0.0001) return '< 0.0001 ETH';
-            if (num < 1) return num.toFixed(5) + ' ETH';
-            return num.toFixed(3) + ' ETH';
         }
 
         // Show notification
