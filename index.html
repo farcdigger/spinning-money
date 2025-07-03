@@ -811,8 +811,8 @@
 
     <script>
         // Base Mainnet Configuration
-        const BASE_MAINNET_CHAIN_ID = '11155111'; // 8453 in hex
-        const BASE_MAINNET_RPC = 'https://ethereum-sepolia-rpc.publicnode.com';
+        const SEPOLIA_CHAIN_ID = '11155111'; // 8453 in hex
+        const SEPOLIA_RPC = 'https://ethereum-sepolia-rpc.publicnode.com';
         
         // Contract ABI
         const contractABI = [
@@ -871,12 +871,12 @@
                 // Check if on Base Mainnet
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
                 
-                if (chainId !== BASE_MAINNET_CHAIN_ID) {
+                if (chainId !== SEPOLIA_CHAIN_ID) {
                     // Switch to Base Mainnet
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: BASE_MAINNET_CHAIN_ID }],
+                            params: [{ chainId: SEPOLIA_CHAIN_ID }],
                         });
                     } catch (switchError) {
                         // This error code indicates that the chain has not been added to MetaMask
@@ -885,14 +885,14 @@
                                 await window.ethereum.request({
                                     method: 'wallet_addEthereumChain',
                                     params: [{
-                                        chainId: BASE_MAINNET_CHAIN_ID,
+                                        chainId: SEPOLIA_CHAIN_ID,
                                         chainName: 'Base',
                                         nativeCurrency: {
                                             name: 'Ethereum',
                                             symbol: 'ETH',
                                             decimals: 18
                                         },
-                                        rpcUrls: [BASE_MAINNET_RPC],
+                                        rpcUrls: [SEPOLIA_RPC],
                                         blockExplorerUrls: ['https://basescan.org/']
                                     }],
                                 });
