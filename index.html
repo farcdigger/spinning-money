@@ -824,238 +824,50 @@
         const contractABI = [
             {
                 "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "subscriptionId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "vrfCoordinator",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes32",
-                        "name": "_keyHash",
-                        "type": "bytes32"
-                    }
+                    { "internalType": "uint256", "name": "spinCount", "type": "uint256" }
                 ],
-                "stateMutability": "nonpayable",
-                "type": "constructor"
+                "name": "calculateSpinCost",
+                "outputs": [
+                    { "internalType": "uint256", "name": "", "type": "uint256" }
+                ],
+                "stateMutability": "pure",
+                "type": "function"
             },
             {
                 "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "have",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "want",
-                        "type": "address"
-                    }
+                    { "internalType": "address", "name": "user", "type": "address" }
                 ],
-                "name": "OnlyCoordinatorCanFulfill",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "have",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "coordinator",
-                        "type": "address"
-                    }
+                "name": "getUserData",
+                "outputs": [
+                    { "internalType": "uint256", "name": "pendingReward", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalWins", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalSpins", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalWagered", "type": "uint256" },
+                    { "internalType": "uint256", "name": "totalClaimed", "type": "uint256" },
+                    { "internalType": "uint256", "name": "winRate", "type": "uint256" }
                 ],
-                "name": "OnlyOwnerOrCoordinator",
-                "type": "error"
+                "stateMutability": "view",
+                "type": "function"
             },
             {
                 "inputs": [],
-                "name": "ZeroAddress",
-                "type": "error"
+                "name": "getCurrentPrizes",
+                "outputs": [
+                    { "internalType": "uint256[10]", "name": "", "type": "uint256[10]" }
+                ],
+                "stateMutability": "view",
+                "type": "function"
             },
             {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": false,
-                        "internalType": "address",
-                        "name": "vrfCoordinator",
-                        "type": "address"
-                    }
+                "inputs": [],
+                "name": "prizePool",
+                "outputs": [
+                    { "internalType": "uint256", "name": "", "type": "uint256" }
                 ],
-                "name": "CoordinatorSet",
-                "type": "event"
+                "stateMutability": "view",
+                "type": "function"
             },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "OwnerWithdraw",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "from",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "to",
-                        "type": "address"
-                    }
-                ],
-                "name": "OwnershipTransferRequested",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "from",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "to",
-                        "type": "address"
-                    }
-                ],
-                "name": "OwnershipTransferred",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "PrizePoolFunded",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "player",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "amount",
-                        "type": "uint256"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "fee",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "RewardClaimed",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "player",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "requestId",
-                        "type": "uint256"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "spinCount",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "SpinRequested",
-                "type": "event"
-            },
-            {
-                "anonymous": false,
-                "inputs": [
-                    {
-                        "indexed": true,
-                        "internalType": "address",
-                        "name": "player",
-                        "type": "address"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "requestId",
-                        "type": "uint256"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "spinCount",
-                        "type": "uint256"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256",
-                        "name": "totalPrize",
-                        "type": "uint256"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256[]",
-                        "name": "wheelPositions",
-                        "type": "uint256[]"
-                    },
-                    {
-                        "indexed": false,
-                        "internalType": "uint256[]",
-                        "name": "prizes",
-                        "type": "uint256[]"
-                    }
-                ],
-                "name": "SpinResult",
-                "type": "event"
-            },
-            // ... (JSON'un tamamı buraya yapıştırılacak)
+            // ... diğer fonksiyonlar ve eventler buraya eklenebilir ...
         ];
 
         // Contract address - UPDATE THIS AFTER DEPLOYMENT
