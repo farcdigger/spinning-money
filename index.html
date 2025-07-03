@@ -2,175 +2,1255 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Spin & Win - Sepolia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin & Win - Base Blockchain Lottery</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #181c2a; color: #fff; }
-        .container { max-width: 600px; margin: 40px auto; background: #23284a; border-radius: 16px; padding: 32px; }
-        .wheel { margin: 32px auto; width: 320px; height: 320px; border-radius: 50%; border: 8px solid #FFD700; position: relative; background: #222; }
-        .wheel-segment { position: absolute; width: 50%; height: 50%; left: 50%; top: 50%; transform-origin: 0% 100%; }
-        .wheel-label { position: absolute; left: 60%; top: 60%; color: #fff; font-size: 1rem; text-align: center; width: 80px; }
-        .highlight { box-shadow: 0 0 30px 10px #FFD700, 0 0 10px 2px #fff; border-radius: 50%; z-index: 2; }
-        .pointer { position: absolute; left: 50%; top: -30px; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid #FFD700; }
-        button { padding: 12px 32px; border-radius: 8px; border: none; background: #FFD700; color: #222; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin: 8px 0; }
-        .info { margin: 16px 0; }
-        .notification { margin: 12px 0; color: #FFD700; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            background: linear-gradient(45deg, #FFD700, #FFA500, #FF6347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .network-badge {
+            display: inline-block;
+            background: #0052FF;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .wallet-section {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        .connect-btn {
+            background: linear-gradient(45deg, #0052FF, #0066FF);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0, 82, 255, 0.4);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 82, 255, 0.6);
+        }
+
+        .connect-btn.connected {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 40px;
+            align-items: start;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .left-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+            transition: transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wheel-segment:nth-child(1) { background: #FF0000; transform: rotate(0deg); }
+        .wheel-segment:nth-child(2) { background: #333333; transform: rotate(36deg); }
+        .wheel-segment:nth-child(3) { background: #FF0000; transform: rotate(72deg); }
+        .wheel-segment:nth-child(4) { background: #4CAF50; transform: rotate(108deg); }
+        .wheel-segment:nth-child(5) { background: #2196F3; transform: rotate(144deg); }
+        .wheel-segment:nth-child(6) { background: #9C27B0; transform: rotate(180deg); }
+        .wheel-segment:nth-child(7) { background: #FF9800; transform: rotate(216deg); }
+        .wheel-segment:nth-child(8) { background: #333333; transform: rotate(252deg); }
+        .wheel-segment:nth-child(9) { background: #00BCD4; transform: rotate(288deg); }
+        .wheel-segment:nth-child(10) { background: #FFD700; transform: rotate(324deg); }
+
+        .wheel-label {
+            position: absolute;
+            transform: rotate(-18deg) translateX(120px);
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .wheel-label .percentage {
+            font-size: 1.1rem;
+            display: block;
+        }
+
+        .wheel-label .eth-amount {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-top: 60px solid #FFD700;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+            z-index: 10;
+        }
+
+        .pool-info {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .pool-label {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .pool-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .pool-subtext {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .right-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .buy-spins-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 25px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-align: center;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .spin-selector {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .spin-amount-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .spin-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: #FFD700;
+            transform: translateY(-2px);
+        }
+
+        .quick-btn.active {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #1a1a1a;
+            border-color: #FFD700;
+        }
+
+        .custom-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .spin-adjust-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spin-adjust-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .spin-input {
+            width: 100px;
+            padding: 12px;
+            font-size: 1.3rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .cost-breakdown {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .cost-row.total {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FFD700;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .spin-btn {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #1a1a1a;
+            border: none;
+            padding: 20px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.6);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .spin-btn.spinning {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #FFD700;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .stat-label {
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .claim-section {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(46, 125, 50, 0.2));
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+            text-align: center;
+        }
+
+        .pending-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 15px 0;
+        }
+
+        .claim-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .claim-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(76, 175, 80, 0.6);
+        }
+
+        .prizes-table {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .prize-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .prize-row:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .prize-row.jackpot {
+            background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 140, 0, 0.2));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 5px solid #4CAF50;
+        }
+
+        .notification.error {
+            border-left: 5px solid #f44336;
+        }
+
+        .notification.info {
+            border-left: 5px solid #2196F3;
+        }
+
+        .spin-result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .spin-result-content {
+            background: linear-gradient(135deg, #1a1a3e, #2d2d5e);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .result-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .result-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 20px 0;
+        }
+
+        .result-details {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                max-width: 600px;
+            }
+            
+            .info-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .wheel-container {
+                width: 350px;
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .quick-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <h2>Spin & Win (Sepolia)</h2>
-    <div>
-        <button id="connectBtn" onclick="connectWallet()">Cüzdanı Bağla</button>
-        <span id="walletAddress"></span>
-    </div>
-    <div class="info">
-        <div>Havuz: <span id="prizePool">0</span> ETH</div>
-        <div>Bekleyen Ödül: <span id="pendingReward">0</span> ETH</div>
-        <div>Toplam Spin: <span id="totalSpins">0</span></div>
-        <div>Toplam Kazanç: <span id="totalClaimed">0</span> ETH</div>
-    </div>
-    <div class="wheel" id="wheel">
-        <div class="pointer"></div>
-        <!-- Segmentler JS ile eklenecek -->
-    </div>
-    <div>
-        <input type="number" id="spinCount" min="1" max="100" value="1" style="width:60px;">
-        <button onclick="spin()">Spin</button>
-        <button onclick="claimReward()">Ödül Çek</button>
-    </div>
-    <div class="notification" id="notification"></div>
-</div>
-<script>
-const SEPOLIA_CHAIN_ID = '0xaa36a7';
-const contractAddress = "0xe2523b54d1503768dd2e2325941e1dc0115c2cb1";
-const contractABI = [
-  {
-    "inputs": [{"internalType": "uint256","name": "spinCount","type": "uint256"}],
-    "name": "calculateSpinCost",
-    "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
-    "stateMutability": "pure","type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address","name": "user","type": "address"}],
-    "name": "getUserData",
-    "outputs": [
-      {"internalType": "uint256","name": "pendingReward","type": "uint256"},
-      {"internalType": "uint256","name": "totalWins","type": "uint256"},
-      {"internalType": "uint256","name": "totalSpins","type": "uint256"},
-      {"internalType": "uint256","name": "totalWagered","type": "uint256"},
-      {"internalType": "uint256","name": "totalClaimed","type": "uint256"},
-      {"internalType": "uint256","name": "winRate","type": "uint256"}
-    ],
-    "stateMutability": "view","type": "function"
-  },
-  {
-    "inputs": [],"name": "getCurrentPrizes",
-    "outputs": [{"internalType": "uint256[10]","name": "","type": "uint256[10]"}],
-    "stateMutability": "view","type": "function"
-  },
-  {
-    "inputs": [],"name": "prizePool",
-    "outputs": [{"internalType": "uint256","name": "","type": "uint256"}],
-    "stateMutability": "view","type": "function"
-  },
-  {"inputs": [{"internalType": "uint256","name": "spinCount","type": "uint256"}],"name": "spin","outputs": [],"stateMutability": "payable","type": "function"},
-  {"inputs": [],"name": "claimReward","outputs": [],"stateMutability": "nonpayable","type": "function"}
-];
+    <div class="container">
+        <div class="header">
+            <h1>SPIN & WIN</h1>
+            <p>Decentralized Lottery on Base</p>
+            <span class="network-badge">Base Mainnet</span>
+        </div>
 
-let provider, signer, contract, userAddress;
-const segmentLabels = [
-    "LOSE", "LOSE", "LOSE", "5%", "10%", "15%", "20%", "LOSE", "30%", "JACKPOT"
-];
+        <div class="wallet-section">
+            <button id="connectBtn" class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+            <p id="walletAddress" style="margin-top: 10px; opacity: 0.7;"></p>
+        </div>
 
-async function connectWallet() {
-    if (!window.ethereum) return notify('Metamask gerekli!');
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if (chainId !== SEPOLIA_CHAIN_ID) {
-        await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: SEPOLIA_CHAIN_ID }]
+        <div class="main-content">
+            <!-- Left Section - Wheel & Pool -->
+            <div class="left-section">
+                <div class="pool-info pulse">
+                    <div class="pool-label">PRIZE POOL</div>
+                    <div class="pool-amount" id="prizePool">0 ETH</div>
+                    <div class="pool-subtext">Grows with every spin!</div>
+                </div>
+
+                <div class="wheel-container">
+                    <div class="pointer"></div>
+                    <div id="wheel" class="wheel">
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">LOSE</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">LOSE</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">LOSE</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">5%</span>
+                                <span class="eth-amount" id="prize3">0 ETH</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">10%</span>
+                                <span class="eth-amount" id="prize4">0 ETH</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">15%</span>
+                                <span class="eth-amount" id="prize5">0 ETH</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">20%</span>
+                                <span class="eth-amount" id="prize6">0 ETH</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">LOSE</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">30%</span>
+                                <span class="eth-amount" id="prize8">0 ETH</span>
+                            </div>
+                        </div>
+                        <div class="wheel-segment">
+                            <div class="wheel-label">
+                                <span class="percentage">JACKPOT</span>
+                                <span class="eth-amount" id="prize9">0 ETH</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section - Buy Spins & Info -->
+            <div class="right-section">
+                <!-- Buy Spins Card -->
+                <div class="buy-spins-card">
+                    <h2 class="card-title">Buy Spins</h2>
+                    
+                    <div class="spin-selector">
+                        <div class="spin-amount-display">
+                            <div class="spin-number" id="spinNumber">1</div>
+                            <div>SPINS</div>
+                        </div>
+
+                        <div class="quick-buttons">
+                            <button class="quick-btn active" onclick="setSpinCount(1)">1</button>
+                            <button class="quick-btn" onclick="setSpinCount(5)">5</button>
+                            <button class="quick-btn" onclick="setSpinCount(10)">10</button>
+                            <button class="quick-btn" onclick="setSpinCount(25)">25</button>
+                            <button class="quick-btn" onclick="setSpinCount(50)">50</button>
+                            <button class="quick-btn" onclick="setSpinCount(100)">100</button>
+                        </div>
+
+                        <div class="custom-input-group">
+                            <button class="spin-adjust-btn" onclick="adjustSpinCount(-1)">−</button>
+                            <input type="number" id="spinCount" class="spin-input" value="1" min="1" max="100" onchange="updateSpinDisplay()">
+                            <button class="spin-adjust-btn" onclick="adjustSpinCount(1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="cost-breakdown">
+                        <div class="cost-row">
+                            <span>Price per spin:</span>
+                            <span>0.00025 ETH</span>
+                        </div>
+                        <div class="cost-row">
+                            <span>Number of spins:</span>
+                            <span id="spinCountDisplay">1</span>
+                        </div>
+                        <div class="cost-row total">
+                            <span>Total Cost:</span>
+                            <span id="totalCost">0.00025 ETH</span>
+                        </div>
+                    </div>
+
+                    <button id="spinBtn" class="spin-btn" onclick="spin()" disabled>
+                        SPIN NOW
+                    </button>
+                </div>
+
+                <!-- Info Cards -->
+                <div class="info-cards">
+                    <!-- User Stats -->
+                    <div class="info-card">
+                        <h3>Your Stats</h3>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Spins</span>
+                            <span class="stat-value" id="totalSpins">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Wins</span>
+                            <span class="stat-value" id="totalWins">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Win Rate</span>
+                            <span class="stat-value" id="winRate">0%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Wagered</span>
+                            <span class="stat-value" id="totalWagered">0 ETH</span>
+                        </div>
+                    </div>
+
+                    <!-- Claim Section -->
+                    <div class="info-card">
+                        <h3>Your Rewards</h3>
+                        <div id="claimSection" style="display: none;">
+                            <div class="pending-amount" id="pendingReward">0 ETH</div>
+                            <p style="opacity: 0.7; margin-bottom: 15px;">3% fee on withdrawal</p>
+                            <button class="claim-btn" onclick="claimReward()">Claim Now</button>
+                        </div>
+                        <div id="noRewardsText" style="text-align: center; opacity: 0.6; padding: 20px;">
+                            No pending rewards
+                        </div>
+                        <div class="stat-item" style="margin-top: 20px;">
+                            <span class="stat-label">Total Claimed</span>
+                            <span class="stat-value" id="totalClaimed">0 ETH</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prize Table -->
+                <div class="info-card">
+                    <h3>Current Prizes</h3>
+                    <div class="prizes-table">
+                        <div class="prize-row jackpot">
+                            <span>🎯 JACKPOT (50%)</span>
+                            <span id="dynamicPrize9">0 ETH</span>
+                        </div>
+                        <div class="prize-row">
+                            <span>💎 30% of Pool</span>
+                            <span id="dynamicPrize8">0 ETH</span>
+                        </div>
+                        <div class="prize-row">
+                            <span>🌟 20% of Pool</span>
+                            <span id="dynamicPrize6">0 ETH</span>
+                        </div>
+                        <div class="prize-row">
+                            <span>⭐ 15% of Pool</span>
+                            <span id="dynamicPrize5">0 ETH</span>
+                        </div>
+                        <div class="prize-row">
+                            <span>✨ 10% of Pool</span>
+                            <span id="dynamicPrize4">0 ETH</span>
+                        </div>
+                        <div class="prize-row">
+                            <span>🔸 5% of Pool</span>
+                            <span id="dynamicPrize3">0 ETH</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spin Result Modal -->
+    <div class="spin-result-modal" id="resultModal">
+        <div class="spin-result-content">
+            <h2 class="result-title" id="resultTitle">Spin Complete!</h2>
+            <div class="result-amount" id="resultAmount">0 ETH</div>
+            <div class="result-details">
+                <p id="resultDetails">Details</p>
+            </div>
+            <button class="claim-btn" onclick="closeResultModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Base Mainnet Configuration
+        const BASE_MAINNET_CHAIN_ID = '0x2105'; // 8453 in hex
+        const BASE_MAINNET_RPC = 'https://mainnet.base.org';
+        
+        // Contract ABI
+        const contractABI = [
+            "function spin(uint256 spinCount) payable",
+            "function claimReward()",
+            "function getUserData(address) view returns (uint256, uint256, uint256, uint256, uint256, uint256)",
+            "function prizePool() view returns (uint256)",
+            "function getContractBalance() view returns (uint256)",
+            "function getCurrentPrizes() view returns (uint256[10])",
+            "function calculateSpinCost(uint256) pure returns (uint256)",
+            "event SpinRequested(address indexed player, uint256 requestId, uint256 spinCount)",
+            "event SpinResult(address indexed player, uint256 requestId, uint256 spinCount, uint256 totalPrize, uint256[] wheelPositions, uint256[] prizes)",
+            "event RewardClaimed(address indexed player, uint256 amount, uint256 fee)"
+        ];
+
+        // Contract address - UPDATE THIS AFTER DEPLOYMENT
+        const contractAddress = "0x03a5adf8ec7c310fb3d0290bd34680af2598e488"; // Base Mainnet'e deploy edildi
+
+        let provider;
+        let signer;
+        let contract;
+        let userAddress;
+        let isSpinning = false;
+        let currentSpinCount = 1;
+        let pendingSpins = new Map();
+
+        // Initialize
+        window.addEventListener('load', () => {
+            checkMetaMask();
+            updateSpinDisplay();
         });
-    }
-    provider = new ethers.BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-    userAddress = await signer.getAddress();
-    contract = new ethers.Contract(contractAddress, contractABI, signer);
-    document.getElementById('walletAddress').textContent = userAddress.slice(0,6) + '...' + userAddress.slice(-4);
-    notify('Cüzdan bağlandı!');
-    await updateAllData();
-    renderWheel();
-}
 
-function notify(msg) {
-    document.getElementById('notification').textContent = msg;
-    setTimeout(() => { document.getElementById('notification').textContent = ''; }, 4000);
-}
-
-async function updateAllData() {
-    if (!contract || !userAddress) return;
-    try {
-        const [pendingReward, , totalSpins, , totalClaimed] = await contract.getUserData(userAddress);
-        const prizePool = await contract.prizePool();
-        const currentPrizes = await contract.getCurrentPrizes();
-        document.getElementById('prizePool').textContent = ethers.formatEther(prizePool);
-        document.getElementById('pendingReward').textContent = ethers.formatEther(pendingReward);
-        document.getElementById('totalSpins').textContent = totalSpins;
-        document.getElementById('totalClaimed').textContent = ethers.formatEther(totalClaimed);
-        // Güncel ödülleri çark segmentlerine yaz
-        for (let i = 0; i < 10; i++) {
-            const label = document.getElementById('segLabel'+i);
-            if (label) label.innerHTML = segmentLabels[i] + '<br><b>' + ethers.formatEther(currentPrizes[i]) + ' ETH</b>';
+        // Check if MetaMask is installed
+        function checkMetaMask() {
+            if (typeof window.ethereum === 'undefined') {
+                showNotification('Please install MetaMask to play!', 'error');
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('connectBtn').textContent = 'Install MetaMask';
+                document.getElementById('connectBtn').onclick = () => {
+                    window.open('https://metamask.io/download/', '_blank');
+                };
+            }
         }
-    } catch (e) {
-        notify('Veri çekilemedi: ' + e.message);
-    }
-}
 
-function renderWheel() {
-    const wheel = document.getElementById('wheel');
-    wheel.innerHTML = '<div class=\"pointer\"></div>';
-    for (let i = 0; i < 10; i++) {
-        const seg = document.createElement('div');
-        seg.className = 'wheel-segment';
-        seg.style.transform = `rotate(${i*36}deg) skewY(-54deg)`;
-        seg.innerHTML = `<div class=\"wheel-label\" id=\"segLabel${i}\">${segmentLabels[i]}<br><b>0 ETH</b></div>`;
-        wheel.appendChild(seg);
-    }
-}
+        // Connect wallet
+        async function connectWallet() {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    window.open('https://metamask.io/download/', '_blank');
+                    return;
+                }
 
-async function spin() {
-    if (!contract) return notify('Cüzdan bağlı değil!');
-    const spinCount = parseInt(document.getElementById('spinCount').value) || 1;
-    try {
-        const cost = await contract.calculateSpinCost(spinCount);
-        const tx = await contract.spin(spinCount, { value: cost });
-        notify('Spin işlemi gönderildi!');
-        await tx.wait();
-        notify('Spin işlemi onaylandı, sonuç bekleniyor...');
-        setTimeout(updateAllData, 5000);
-    } catch (e) {
-        notify('Spin hatası: ' + e.message);
-    }
-}
+                // Request account access
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                // Check if on Base Mainnet
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                
+                if (chainId !== BASE_MAINNET_CHAIN_ID) {
+                    // Switch to Base Mainnet
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: BASE_MAINNET_CHAIN_ID }],
+                        });
+                    } catch (switchError) {
+                        // This error code indicates that the chain has not been added to MetaMask
+                        if (switchError.code === 4902) {
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: BASE_MAINNET_CHAIN_ID,
+                                        chainName: 'Base',
+                                        nativeCurrency: {
+                                            name: 'Ethereum',
+                                            symbol: 'ETH',
+                                            decimals: 18
+                                        },
+                                        rpcUrls: [BASE_MAINNET_RPC],
+                                        blockExplorerUrls: ['https://basescan.org/']
+                                    }],
+                                });
+                            } catch (addError) {
+                                showNotification('Failed to add Base network', 'error');
+                                return;
+                            }
+                        } else {
+                            showNotification('Failed to switch to Base network', 'error');
+                            return;
+                        }
+                    }
+                }
+                
+                // Initialize ethers
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+                userAddress = await signer.getAddress();
+                
+                // Initialize contract
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-async function claimReward() {
-    if (!contract) return notify('Cüzdan bağlı değil!');
-    try {
-        const tx = await contract.claimReward();
-        notify('Çekim işlemi gönderildi!');
-        await tx.wait();
-        notify('Ödül çekildi!');
-        updateAllData();
-    } catch (e) {
-        notify('Çekim hatası: ' + e.message);
-    }
-}
+                // Update UI
+                document.getElementById('connectBtn').textContent = 'Connected ✓';
+                document.getElementById('connectBtn').classList.add('connected');
+                document.getElementById('walletAddress').textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                document.getElementById('spinBtn').disabled = false;
 
-window.addEventListener('load', () => {
-    renderWheel();
-});
-</script>
+                // Setup event listeners
+                setupEventListeners();
+
+                // Load initial data
+                await updateAllData();
+
+                showNotification('Wallet connected to Base!', 'success');
+
+                // Auto-update data every 5 seconds
+                setInterval(updateAllData, 5000);
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                showNotification('Failed to connect: ' + error.message, 'error');
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Listen for spin requests
+            contract.on("SpinRequested", (player, requestId, spinCount) => {
+                if (player.toLowerCase() === userAddress.toLowerCase()) {
+                    pendingSpins.set(requestId.toString(), spinCount);
+                    showNotification(`Spin requested! Waiting for Chainlink VRF...`, 'info');
+                }
+            });
+
+            // Listen for spin results
+            contract.on("SpinResult", async (player, requestId, spinCount, totalPrize, wheelPositions, prizes) => {
+                if (player.toLowerCase() === userAddress.toLowerCase()) {
+                    handleSpinResult(requestId, spinCount, totalPrize, wheelPositions, prizes);
+                }
+            });
+
+            // Listen for claim events
+            contract.on("RewardClaimed", (player, amount, fee) => {
+                if (player.toLowerCase() === userAddress.toLowerCase()) {
+                    const netAmount = ethers.formatEther(amount);
+                    const feeAmount = ethers.formatEther(fee);
+                    showNotification(`Successfully claimed ${netAmount} ETH! (Fee: ${feeAmount} ETH)`, 'success');
+                    updateAllData();
+                }
+            });
+
+            // Listen for account changes
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    location.reload();
+                } else {
+                    location.reload();
+                }
+            });
+
+            // Listen for chain changes
+            window.ethereum.on('chainChanged', () => {
+                location.reload();
+            });
+        }
+
+        // Set spin count
+        function setSpinCount(count) {
+            currentSpinCount = count;
+            document.getElementById('spinCount').value = count;
+            
+            // Update active button
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateSpinDisplay();
+        }
+
+        // Adjust spin count
+        function adjustSpinCount(delta) {
+            const input = document.getElementById('spinCount');
+            const current = parseInt(input.value) || 1;
+            const newValue = Math.max(1, Math.min(100, current + delta));
+            currentSpinCount = newValue;
+            input.value = newValue;
+            
+            // Update active button
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            updateSpinDisplay();
+        }
+
+        // Update spin display
+        function updateSpinDisplay() {
+            const spinCount = parseInt(document.getElementById('spinCount').value) || 1;
+            currentSpinCount = spinCount;
+            
+            document.getElementById('spinNumber').textContent = spinCount;
+            document.getElementById('spinCountDisplay').textContent = spinCount;
+            
+            const cost = spinCount * 0.00025;
+            document.getElementById('totalCost').textContent = cost.toFixed(5) + ' ETH';
+        }
+
+        // Spin function
+        async function spin() {
+            if (isSpinning || !contract) return;
+            
+            try {
+                isSpinning = true;
+                const spinBtn = document.getElementById('spinBtn');
+                spinBtn.disabled = true;
+                spinBtn.classList.add('spinning');
+                spinBtn.textContent = 'Processing...';
+
+                const spinCount = currentSpinCount;
+                const cost = await contract.calculateSpinCost(spinCount);
+
+                // Send transaction
+                
+                const tx = await contract.spin(spinCount, { value: cost });
+
+                
+
+                
+                spinBtn.textContent = 'Confirming...';
+                showNotification('Transaction sent! Waiting for confirmation...', 'info');
+                
+                // Wait for transaction
+                await tx.wait();
+                
+                spinBtn.textContent = 'Waiting for VRF...';
+                showNotification('Transaction confirmed! Waiting for random number...', 'info');
+                
+                // Start spinning animation
+                startSpinAnimation();
+                
+                // Update data while waiting
+                await updateAllData();
+
+            } catch (error) {
+                console.error('Spin error:', error);
+                showNotification('Spin failed: ' + error.message, 'error');
+                resetSpinButton();
+            }
+        }
+
+        // Start spin animation
+        function startSpinAnimation() {
+            const wheel = document.getElementById('wheel');
+            // Add continuous spinning
+            wheel.style.transition = 'none';
+            wheel.style.transform = 'rotate(0deg)';
+            setTimeout(() => {
+                wheel.style.transition = 'transform 1s linear infinite';
+                wheel.style.transform = 'rotate(360deg)';
+            }, 10);
+        }
+
+        // Handle spin result
+        async function handleSpinResult(requestId, spinCount, totalPrize, wheelPositions, prizes) {
+            const requestIdStr = requestId.toString();
+            
+            if (!pendingSpins.has(requestIdStr)) return;
+            
+            pendingSpins.delete(requestIdStr);
+            
+            // Stop continuous animation and animate to final position
+            const wheel = document.getElementById('wheel');
+            wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            
+            // For multiple spins, show the last position
+            const finalPosition = Number(wheelPositions[wheelPositions.length - 1]);
+            animateWheel(finalPosition);
+            
+            // Show results after animation
+            setTimeout(() => {
+                const totalWon = ethers.formatEther(totalPrize);
+                const wins = prizes.filter(p => p > 0n).length;
+                
+                // Show result modal
+                showResultModal(spinCount, wins, totalWon);
+                
+                // Reset UI
+                resetSpinButton();
+                
+                // Update all data
+                updateAllData();
+                
+            }, 4000);
+        }
+
+        // Animate wheel to position
+        function animateWheel(position) {
+            const wheel = document.getElementById('wheel');
+            const degrees = position * 36; // Each segment is 36 degrees
+            const spins = 5; // Number of full rotations
+            const totalRotation = spins * 360 + degrees + Math.random() * 30 - 15;
+            
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+        }
+
+        // Reset spin button
+        function resetSpinButton() {
+            isSpinning = false;
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = false;
+            spinBtn.classList.remove('spinning');
+            spinBtn.textContent = 'SPIN NOW';
+        }
+
+        // Show result modal
+        function showResultModal(spinCount, wins, totalWon) {
+            const modal = document.getElementById('resultModal');
+            const title = document.getElementById('resultTitle');
+            const amount = document.getElementById('resultAmount');
+            const details = document.getElementById('resultDetails');
+            
+            if (wins > 0) {
+                title.textContent = '🎉 Winner!';
+                title.style.color = '#4CAF50';
+                amount.textContent = totalWon + ' ETH';
+                details.textContent = `You won ${wins} out of ${spinCount} spins!`;
+            } else {
+                title.textContent = '😢 Better Luck Next Time!';
+                title.style.color = '#f44336';
+                amount.textContent = '0 ETH';
+                details.textContent = `You lost all ${spinCount} spins. Try again!`;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Close result modal
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        // Claim rewards
+        async function claimReward() {
+            try {
+                const claimBtn = event.target;
+                claimBtn.disabled = true;
+                claimBtn.textContent = 'Processing...';
+
+                const tx = await contract.claimReward();
+                showNotification('Claiming rewards...', 'info');
+                await tx.wait();
+
+                showNotification('Rewards claimed successfully!', 'success');
+                await updateAllData();
+            } catch (error) {
+                console.error('Claim error:', error);
+                showNotification('Claim failed: ' + error.message, 'error');
+            } finally {
+                const claimBtn = event.target;
+                claimBtn.disabled = false;
+                claimBtn.textContent = 'Claim Now';
+            }
+        }
+
+        // Update all data
+        async function updateAllData() {
+            if (!contract || !userAddress) return;
+            
+            try {
+                // Get user data
+                const userData = await contract.getUserData(userAddress);
+                const [pendingReward, totalWins, totalSpins, totalWagered, totalClaimed, winRate] = userData;
+
+                // Update user stats
+                document.getElementById('totalSpins').textContent = totalSpins.toString();
+                document.getElementById('totalWins').textContent = totalWins.toString();
+                document.getElementById('winRate').textContent = winRate.toString() + '%';
+                document.getElementById('totalWagered').textContent = formatEther(totalWagered);
+                document.getElementById('totalClaimed').textContent = formatEther(totalClaimed);
+
+                // Update pending rewards
+                const pendingEth = ethers.formatEther(pendingReward);
+                document.getElementById('pendingReward').textContent = pendingEth + ' ETH';
+                
+                // Show/hide claim section
+                if (pendingReward > 0n) {
+                    document.getElementById('claimSection').style.display = 'block';
+                    document.getElementById('noRewardsText').style.display = 'none';
+                } else {
+                    document.getElementById('claimSection').style.display = 'none';
+                    document.getElementById('noRewardsText').style.display = 'block';
+                }
+
+                // Get contract data
+                const prizePool = await contract.prizePool();
+                const currentPrizes = await contract.getCurrentPrizes();
+
+                // Update pool display
+                document.getElementById('prizePool').textContent = formatEther(prizePool);
+
+                // Update prize displays
+                const prizeIndices = [3, 4, 5, 6, 8, 9];
+                prizeIndices.forEach(i => {
+                    const prizeElement = document.getElementById(`prize${i}`);
+                    const dynamicElement = document.getElementById(`dynamicPrize${i}`);
+                    const amount = formatEther(currentPrizes[i]);
+                    
+                    if (prizeElement) prizeElement.textContent = amount;
+                    if (dynamicElement) dynamicElement.textContent = amount;
+                });
+
+            } catch (error) {
+                console.error('Update error:', error);
+            }
+        }
+
+        // Format ether with better display
+        function formatEther(value) {
+            const eth = ethers.formatEther(value);
+            const num = parseFloat(eth);
+            if (num === 0) return '0 ETH';
+            if (num < 0.0001) return '< 0.0001 ETH';
+            if (num < 1) return num.toFixed(5) + ' ETH';
+            return num.toFixed(3) + ' ETH';
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+    </script>
 </body>
 </html>
