@@ -591,7 +591,7 @@
         <div class="header">
             <h1>SPIN & WIN</h1>
             <p>Decentralized Lottery on Base</p>
-            <span class="network-badge">Base Mainnet</span>
+            <span class="network-badge">Sepolia Testnet</span>
         </div>
 
         <div class="wallet-section">
@@ -829,7 +829,7 @@
         ];
 
         // Contract address - UPDATE THIS AFTER DEPLOYMENT
-        const contractAddress = "0x03a5adf8ec7c310fb3d0290bd34680af2598e488"; // Base Mainnet'e deploy edildi
+        const contractAddress = "0xe2523b54d1503768dd2e2325941e1dc0115c2cb1"; // Base Mainnet'e deploy edildi
 
         let provider;
         let signer;
@@ -1034,20 +1034,44 @@
                 spinBtn.textContent = 'Processing...';
 
                 const spinCount = currentSpinCount;
+                
+                // Debug bilgileri
+                console.log("Spin count:", spinCount);
+                console.log("User address:", userAddress);
+                
+                // Cost hesapla
                 const cost = await contract.calculateSpinCost(spinCount);
+                console.log("Cost:", ethers.formatEther(cost), "ETH");
+                
+                // Balance kontrolü
+                const balance = await provider.getBalance(userAddress);
+                console.log("User balance:", ethers.formatEther(balance), "ETH");
+                
+                if (balance < cost) {
+                    throw new Error("Insufficient ETH balance");
+                }
+                
+                // Prize pool kontrolü
+                const prizePool = await contract.prizePool();
+                console.log("Prize pool:", ethers.formatEther(prizePool), "ETH");
+                
+                if (prizePool == 0n) {
+                    throw new Error("Prize pool is empty. Please fund the pool first.");
+                }
 
                 // Send transaction
-                
-                const tx = await contract.spin(spinCount, { value: cost });
-
-                
-
+                console.log("Sending transaction...");
+                const tx = await contract.spin(spinCount, { 
+                    value: cost,
+                    gasLimit: 1000000 // Gas limit ekleyelim
+                });
                 
                 spinBtn.textContent = 'Confirming...';
                 showNotification('Transaction sent! Waiting for confirmation...', 'info');
                 
                 // Wait for transaction
-                await tx.wait();
+                const receipt = await tx.wait();
+                console.log("Transaction receipt:", receipt);
                 
                 spinBtn.textContent = 'Waiting for VRF...';
                 showNotification('Transaction confirmed! Waiting for random number...', 'info');
@@ -1059,8 +1083,21 @@
                 await updateAllData();
 
             } catch (error) {
-                console.error('Spin error:', error);
-                showNotification('Spin failed: ' + error.message, 'error');
+                console.error('Spin error details:', error);
+                
+                // Daha detaylı hata mesajları
+                let errorMessage = 'Spin failed: ';
+                if (error.message.includes("Insufficient ETH")) {
+                    errorMessage += "Not enough ETH in wallet";
+                } else if (error.message.includes("Prize pool is empty")) {
+                    errorMessage += "Prize pool needs funding";
+                } else if (error.message.includes("user rejected")) {
+                    errorMessage += "Transaction cancelled";
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showNotification(errorMessage, 'error');
                 resetSpinButton();
             }
         }
