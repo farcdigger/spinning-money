@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spin & Win - Base Blockchain Lottery</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Spin &amp; Win - Base Blockchain Lottery</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<style>
         * {
             margin: 0;
             padding: 0;
@@ -587,229 +588,214 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>SPIN & WIN</h1>
-            <p>Decentralized Lottery on Ethereum</p>
-            <span class="network-badge">Sepolia Testnet</span>
-        </div>
-
-        <div class="wallet-section">
-            <button id="connectBtn" class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
-            <p id="walletAddress" style="margin-top: 10px; opacity: 0.7;"></p>
-        </div>
-
-        <div class="main-content">
-            <!-- Left Section - Wheel & Pool -->
-            <div class="left-section">
-                <div class="pool-info pulse">
-                    <div class="pool-label">PRIZE POOL</div>
-                    <div class="pool-amount" id="prizePool">0 ETH</div>
-                    <div class="pool-subtext">Grows with every spin!</div>
-                </div>
-
-                <div class="wheel-container">
-                    <div class="pointer"></div>
-                    <div id="wheel" class="wheel">
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">5%</span>
-                                <span class="eth-amount" id="prize3">0 ETH</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">10%</span>
-                                <span class="eth-amount" id="prize4">0 ETH</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">15%</span>
-                                <span class="eth-amount" id="prize5">0 ETH</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">20%</span>
-                                <span class="eth-amount" id="prize6">0 ETH</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">30%</span>
-                                <span class="eth-amount" id="prize8">0 ETH</span>
-                            </div>
-                        </div>
-                        <div class="wheel-segment">
-                            <div class="wheel-label">
-                                <span class="percentage">JACKPOT</span>
-                                <span class="eth-amount" id="prize9">0 ETH</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Section - Buy Spins & Info -->
-            <div class="right-section">
-                <!-- Buy Spins Card -->
-                <div class="buy-spins-card">
-                    <h2 class="card-title">Buy Spins</h2>
-                    
-                    <div class="spin-selector">
-                        <div class="spin-amount-display">
-                            <div class="spin-number" id="spinNumber">1</div>
-                            <div>SPINS</div>
-                        </div>
-
-                        <div class="quick-buttons">
-                            <button class="quick-btn active" onclick="setSpinCount(1)">1</button>
-                            <button class="quick-btn" onclick="setSpinCount(5)">5</button>
-                            <button class="quick-btn" onclick="setSpinCount(10)">10</button>
-                            <button class="quick-btn" onclick="setSpinCount(25)">25</button>
-                            <button class="quick-btn" onclick="setSpinCount(50)">50</button>
-                            <button class="quick-btn" onclick="setSpinCount(100)">100</button>
-                        </div>
-
-                        <div class="custom-input-group">
-                            <button class="spin-adjust-btn" onclick="adjustSpinCount(-1)">−</button>
-                            <input type="number" id="spinCount" class="spin-input" value="1" min="1" max="100" onchange="updateSpinDisplay()">
-                            <button class="spin-adjust-btn" onclick="adjustSpinCount(1)">+</button>
-                        </div>
-                    </div>
-
-                    <div class="cost-breakdown">
-                        <div class="cost-row">
-                            <span>Price per spin:</span>
-                            <span>0.00025 ETH</span>
-                        </div>
-                        <div class="cost-row">
-                            <span>Number of spins:</span>
-                            <span id="spinCountDisplay">1</span>
-                        </div>
-                        <div class="cost-row total">
-                            <span>Total Cost:</span>
-                            <span id="totalCost">0.00025 ETH</span>
-                        </div>
-                    </div>
-
-                    <button id="spinBtn" class="spin-btn" onclick="spin()" disabled>
+<div class="container">
+<div class="header">
+<h1>SPIN &amp; WIN</h1>
+<p>Decentralized Lottery on Ethereum</p>
+<span class="network-badge">Sepolia Testnet</span>
+</div>
+<div class="wallet-section">
+<button class="connect-btn" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+<p id="walletAddress" style="margin-top: 10px; opacity: 0.7;"></p>
+</div>
+<div class="main-content">
+<!-- Left Section - Wheel & Pool -->
+<div class="left-section">
+<div class="pool-info pulse">
+<div class="pool-label">PRIZE POOL</div>
+<div class="pool-amount" id="prizePool">0 ETH</div>
+<div class="pool-subtext">Grows with every spin!</div>
+</div>
+<div class="wheel-container">
+<div class="pointer"></div>
+<div class="wheel" id="wheel">
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">LOSE</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">LOSE</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">LOSE</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">5%</span>
+<span class="eth-amount" id="prize3">0 ETH</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">10%</span>
+<span class="eth-amount" id="prize4">0 ETH</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">15%</span>
+<span class="eth-amount" id="prize5">0 ETH</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">20%</span>
+<span class="eth-amount" id="prize6">0 ETH</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">LOSE</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">30%</span>
+<span class="eth-amount" id="prize8">0 ETH</span>
+</div>
+</div>
+<div class="wheel-segment">
+<div class="wheel-label">
+<span class="percentage">JACKPOT</span>
+<span class="eth-amount" id="prize9">0 ETH</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Section - Buy Spins & Info -->
+<div class="right-section">
+<!-- Buy Spins Card -->
+<div class="buy-spins-card">
+<h2 class="card-title">Buy Spins</h2>
+<div class="spin-selector">
+<div class="spin-amount-display">
+<div class="spin-number" id="spinNumber">1</div>
+<div>SPINS</div>
+</div>
+<div class="quick-buttons">
+<button class="quick-btn active" onclick="setSpinCount(1)">1</button>
+<button class="quick-btn" onclick="setSpinCount(5)">5</button>
+<button class="quick-btn" onclick="setSpinCount(10)">10</button>
+<button class="quick-btn" onclick="setSpinCount(25)">25</button>
+<button class="quick-btn" onclick="setSpinCount(50)">50</button>
+<button class="quick-btn" onclick="setSpinCount(100)">100</button>
+</div>
+<div class="custom-input-group">
+<button class="spin-adjust-btn" onclick="adjustSpinCount(-1)">−</button>
+<input class="spin-input" id="spinCount" max="100" min="1" onchange="updateSpinDisplay()" type="number" value="1"/>
+<button class="spin-adjust-btn" onclick="adjustSpinCount(1)">+</button>
+</div>
+</div>
+<div class="cost-breakdown">
+<div class="cost-row">
+<span>Price per spin:</span>
+<span>0.00025 ETH</span>
+</div>
+<div class="cost-row">
+<span>Number of spins:</span>
+<span id="spinCountDisplay">1</span>
+</div>
+<div class="cost-row total">
+<span>Total Cost:</span>
+<span id="totalCost">0.00025 ETH</span>
+</div>
+</div>
+<button class="spin-btn" disabled="" id="spinBtn" onclick="spin()">
                         SPIN NOW
                     </button>
-                </div>
-
-                <!-- Info Cards -->
-                <div class="info-cards">
-                    <!-- User Stats -->
-                    <div class="info-card">
-                        <h3>Your Stats</h3>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Spins</span>
-                            <span class="stat-value" id="totalSpins">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Wins</span>
-                            <span class="stat-value" id="totalWins">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Win Rate</span>
-                            <span class="stat-value" id="winRate">0%</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Total Wagered</span>
-                            <span class="stat-value" id="totalWagered">0 ETH</span>
-                        </div>
-                    </div>
-
-                    <!-- Claim Section -->
-                    <div class="info-card">
-                        <h3>Your Rewards</h3>
-                        <div id="claimSection" style="display: none;">
-                            <div class="pending-amount" id="pendingReward">0 ETH</div>
-                            <p style="opacity: 0.7; margin-bottom: 15px;">3% fee on withdrawal</p>
-                            <button class="claim-btn" onclick="claimReward()">Claim Now</button>
-                        </div>
-                        <div id="noRewardsText" style="text-align: center; opacity: 0.6; padding: 20px;">
+</div>
+<!-- Info Cards -->
+<div class="info-cards">
+<!-- User Stats -->
+<div class="info-card">
+<h3>Your Stats</h3>
+<div class="stat-item">
+<span class="stat-label">Total Spins</span>
+<span class="stat-value" id="totalSpins">0</span>
+</div>
+<div class="stat-item">
+<span class="stat-label">Total Wins</span>
+<span class="stat-value" id="totalWins">0</span>
+</div>
+<div class="stat-item">
+<span class="stat-label">Win Rate</span>
+<span class="stat-value" id="winRate">0%</span>
+</div>
+<div class="stat-item">
+<span class="stat-label">Total Wagered</span>
+<span class="stat-value" id="totalWagered">0 ETH</span>
+</div>
+</div>
+<!-- Claim Section -->
+<div class="info-card">
+<h3>Your Rewards</h3>
+<div id="claimSection" style="display: none;">
+<div class="pending-amount" id="pendingReward">0 ETH</div>
+<p style="opacity: 0.7; margin-bottom: 15px;">3% fee on withdrawal</p>
+<button class="claim-btn" onclick="claimReward()">Claim Now</button>
+</div>
+<div id="noRewardsText" style="text-align: center; opacity: 0.6; padding: 20px;">
                             No pending rewards
                         </div>
-                        <div class="stat-item" style="margin-top: 20px;">
-                            <span class="stat-label">Total Claimed</span>
-                            <span class="stat-value" id="totalClaimed">0 ETH</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Prize Table -->
-                <div class="info-card">
-                    <h3>Current Prizes</h3>
-                    <div class="prizes-table">
-                        <div class="prize-row jackpot">
-                            <span>🎯 JACKPOT (50%)</span>
-                            <span id="dynamicPrize9">0 ETH</span>
-                        </div>
-                        <div class="prize-row">
-                            <span>💎 30% of Pool</span>
-                            <span id="dynamicPrize8">0 ETH</span>
-                        </div>
-                        <div class="prize-row">
-                            <span>🌟 20% of Pool</span>
-                            <span id="dynamicPrize6">0 ETH</span>
-                        </div>
-                        <div class="prize-row">
-                            <span>⭐ 15% of Pool</span>
-                            <span id="dynamicPrize5">0 ETH</span>
-                        </div>
-                        <div class="prize-row">
-                            <span>✨ 10% of Pool</span>
-                            <span id="dynamicPrize4">0 ETH</span>
-                        </div>
-                        <div class="prize-row">
-                            <span>🔸 5% of Pool</span>
-                            <span id="dynamicPrize3">0 ETH</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Spin Result Modal -->
-    <div class="spin-result-modal" id="resultModal">
-        <div class="spin-result-content">
-            <h2 class="result-title" id="resultTitle">Spin Complete!</h2>
-            <div class="result-amount" id="resultAmount">0 ETH</div>
-            <div class="result-details">
-                <p id="resultDetails">Details</p>
-            </div>
-            <button class="claim-btn" onclick="closeResultModal()">Close</button>
-        </div>
-    </div>
-
-    <!-- Notification -->
-    <div id="notification" class="notification"></div>
-
-    <script>
+<div class="stat-item" style="margin-top: 20px;">
+<span class="stat-label">Total Claimed</span>
+<span class="stat-value" id="totalClaimed">0 ETH</span>
+</div>
+</div>
+</div>
+<!-- Prize Table -->
+<div class="info-card">
+<h3>Current Prizes</h3>
+<div class="prizes-table">
+<div class="prize-row jackpot">
+<span>🎯 JACKPOT (50%)</span>
+<span id="dynamicPrize9">0 ETH</span>
+</div>
+<div class="prize-row">
+<span>💎 30% of Pool</span>
+<span id="dynamicPrize8">0 ETH</span>
+</div>
+<div class="prize-row">
+<span>🌟 20% of Pool</span>
+<span id="dynamicPrize6">0 ETH</span>
+</div>
+<div class="prize-row">
+<span>⭐ 15% of Pool</span>
+<span id="dynamicPrize5">0 ETH</span>
+</div>
+<div class="prize-row">
+<span>✨ 10% of Pool</span>
+<span id="dynamicPrize4">0 ETH</span>
+</div>
+<div class="prize-row">
+<span>🔸 5% of Pool</span>
+<span id="dynamicPrize3">0 ETH</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Spin Result Modal -->
+<div class="spin-result-modal" id="resultModal">
+<div class="spin-result-content">
+<h2 class="result-title" id="resultTitle">Spin Complete!</h2>
+<div class="result-amount" id="resultAmount">0 ETH</div>
+<div class="result-details">
+<p id="resultDetails">Details</p>
+</div>
+<button class="claim-btn" onclick="closeResultModal()">Close</button>
+</div>
+</div>
+<!-- Notification -->
+<div class="notification" id="notification"></div>
+<script>
         // Base Mainnet Configuration
         const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
         const SEPOLIA_RPC = 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
@@ -1222,6 +1208,16 @@
 
         // Update all data
         async function updateAllData() {
+    const pool = await contract.prizePool();
+    document.getElementById("pool-display").textContent = "Pool: " + ethers.formatEther(pool) + " ETH";
+
+    const prizes = await contract.getCurrentPrizes();
+    let html = '';
+    for (let i = 0; i < prizes.length; i++) {
+      html += `Segment ${i}: ${ethers.formatEther(prizes[i])} ETH<br>`;
+    }
+    document.getElementById("prizes-display").innerHTML = html;
+
             if (!contract || !userAddress) return;
             
             try {
@@ -1312,5 +1308,5 @@
             }, 5000);
         }
     </script>
-</body>
+<p id="pool-display">Pool: loading...</p><p id="prizes-display">Prizes: loading...</p></body>
 </html>
