@@ -590,7 +590,7 @@
     <div class="container">
         <div class="header">
             <h1>SPIN & WIN</h1>
-            <p>Decentralized Lottery on Base</p>
+            <p>Decentralized Lottery on Ethereum</p>
             <span class="network-badge">Sepolia Testnet</span>
         </div>
 
@@ -811,23 +811,27 @@
 
     <script>
         // Base Mainnet Configuration
-        const BASE_MAINNET_CHAIN_ID = '0x2105'; // 8453 in hex
-        const BASE_MAINNET_RPC = 'https://mainnet.base.org';
+        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+        const SEPOLIA_RPC = 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
         
         // Contract ABI
         const contractABI = [
-            "function spin(uint256 spinCount) payable",
-            "function claimReward()",
-            "function getUserData(address) view returns (uint256, uint256, uint256, uint256, uint256, uint256)",
-            "function prizePool() view returns (uint256)",
-            "function getContractBalance() view returns (uint256)",
-            "function getCurrentPrizes() view returns (uint256[10])",
-            "function calculateSpinCost(uint256) pure returns (uint256)",
-            "event SpinRequested(address indexed player, uint256 requestId, uint256 spinCount)",
-            "event SpinResult(address indexed player, uint256 requestId, uint256 spinCount, uint256 totalPrize, uint256[] wheelPositions, uint256[] prizes)",
-            "event RewardClaimed(address indexed player, uint256 amount, uint256 fee)"
-        ];
-
+        "function spin(uint256 spinCount) payable",
+        "function claimReward()",
+        "function getUserData(address) view returns (uint256, uint256, uint256, uint256, uint256, uint256)",
+        "function prizePool() view returns (uint256)",
+        "function getContractBalance() view returns (uint256)",
+        "function getCurrentPrizes() view returns (uint256[10])",
+        "function calculateSpinCost(uint256) pure returns (uint256)",
+        "function owner() view returns (address)",
+        "function s_subscriptionId() view returns (uint256)",
+        "function keyHash() view returns (bytes32)",
+        "event SpinRequested(address indexed player, uint256 requestId, uint256 spinCount)",
+        "event SpinResult(address indexed player, uint256 requestId, uint256 spinCount, uint256 totalPrize, uint256[] wheelPositions, uint256[] prizes)",
+        "event RewardClaimed(address indexed player, uint256 amount, uint256 fee)"
+        ];   
+            
+        
         // Contract address - UPDATE THIS AFTER DEPLOYMENT
         const contractAddress = "0xe2523b54d1503768dd2e2325941e1dc0115c2cb1"; // Base Mainnet'e deploy edildi
 
@@ -876,7 +880,7 @@
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: BASE_MAINNET_CHAIN_ID }],
+                            params: [{ chainId: SEPOLIA_CHAIN_ID }],
                         });
                     } catch (switchError) {
                         // This error code indicates that the chain has not been added to MetaMask
@@ -885,14 +889,14 @@
                                 await window.ethereum.request({
                                     method: 'wallet_addEthereumChain',
                                     params: [{
-                                        chainId: BASE_MAINNET_CHAIN_ID,
+                                        chainId: SEPOLIA_CHAIN_ID,
                                         chainName: 'Base',
                                         nativeCurrency: {
                                             name: 'Ethereum',
                                             symbol: 'ETH',
                                             decimals: 18
                                         },
-                                        rpcUrls: [BASE_MAINNET_RPC],
+                                        rpcUrls: [SEPOLIA_RPC],
                                         blockExplorerUrls: ['https://basescan.org/']
                                     }],
                                 });
@@ -1221,8 +1225,15 @@
             if (!contract || !userAddress) return;
             
             try {
-                // Get user data
-                const userData = await contract.getUserData(userAddress);
+                // Try to get user data, but continue if it fails
+                let userData;
+                try {
+                    userData = await contract.getUserData(userAddress);
+                } catch (error) {
+                    console.error("getUserData failed, using defaults:", error);
+                    userData = [0n, 0n, 0n, 0n, 0n, 0n];
+                }
+                
                 const [pendingReward, totalWins, totalSpins, totalWagered, totalClaimed, winRate] = userData;
 
                 // Update user stats
@@ -1246,8 +1257,20 @@
                 }
 
                 // Get contract data
-                const prizePool = await contract.prizePool();
-                const currentPrizes = await contract.getCurrentPrizes();
+                let prizePool = 0n;
+                let currentPrizes = new Array(10).fill(0n);
+                
+                try {
+                    prizePool = await contract.prizePool();
+                } catch (error) {
+                    console.error("prizePool failed:", error);
+                }
+                
+                try {
+                    currentPrizes = await contract.getCurrentPrizes();
+                } catch (error) {
+                    console.error("getCurrentPrizes failed:", error);
+                }
 
                 // Update pool display
                 document.getElementById('prizePool').textContent = formatEther(prizePool);
