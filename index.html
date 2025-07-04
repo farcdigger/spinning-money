@@ -833,7 +833,7 @@
             
         
         // Contract address - UPDATE THIS AFTER DEPLOYMENT
-        const contractAddress = "0x557d743c02fd894531332f8807e47d08348ef04d"; // Base Mainnet'e deploy edildi
+        const contractAddress = "0x557d743c02fd894531332f8807e47d08348ef04d"; 
 
         let provider;
         let signer;
@@ -874,7 +874,7 @@
                 
                 // Check if on Base Mainnet
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                
+        
                 if (chainId !== SEPOLIA_CHAIN_ID) {
                     // Switch to Base Mainnet
                     try {
