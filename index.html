@@ -827,7 +827,19 @@
     <script>
         // Sepolia Testnet Configuration
         const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
-        const SEPOLIA_RPC = 'https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161';
+        
+        // Alternatif RPC seçenekleri - hangisi çalışırsa onu kullanın
+        const SEPOLIA_RPCS = [
+            'https://rpc.sepolia.org',
+            'https://eth-sepolia.public.blastapi.io',
+            'https://sepolia.gateway.tenderly.co',
+            'https://ethereum-sepolia-rpc.publicnode.com',
+            'https://1rpc.io/sepolia',
+            'https://eth-sepolia-public.unifra.io'
+        ];
+        
+        // Rastgele bir RPC seç (yük dağıtımı için)
+        const SEPOLIA_RPC = SEPOLIA_RPCS[Math.floor(Math.random() * SEPOLIA_RPCS.length)];
         
         // Contract ABI
         const contractABI = [
@@ -876,23 +888,37 @@
             }
         }
 
-        // Check if contract exists
+        // Check if contract exists with retry logic
         async function checkContractExists() {
-            try {
-                const code = await provider.getCode(contractAddress);
-                if (code === '0x') {
-                    // Contract doesn't exist
-                    document.getElementById('contractError').style.display = 'block';
-                    document.getElementById('errorAddress').textContent = contractAddress;
-                    document.getElementById('spinBtn').disabled = true;
-                    showNotification('Contract not found at the specified address!', 'error');
-                    return false;
+            const maxRetries = 3;
+            let lastError;
+            
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const code = await provider.getCode(contractAddress);
+                    if (code === '0x') {
+                        // Contract doesn't exist
+                        document.getElementById('contractError').style.display = 'block';
+                        document.getElementById('errorAddress').textContent = contractAddress;
+                        document.getElementById('spinBtn').disabled = true;
+                        showNotification('Contract not found at the specified address!', 'error');
+                        return false;
+                    }
+                    return true;
+                } catch (error) {
+                    console.error(`Error checking contract (attempt ${i + 1}):`, error);
+                    lastError = error;
+                    
+                    // Rate limit hatası ise biraz bekle
+                    if (error.message && error.message.includes('429')) {
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 saniye bekle
+                    }
                 }
-                return true;
-            } catch (error) {
-                console.error('Error checking contract:', error);
-                return false;
             }
+            
+            console.error('Failed to check contract after retries:', lastError);
+            showNotification('Failed to verify contract. RPC rate limited.', 'error');
+            return false;
         }
 
         // Connect wallet
