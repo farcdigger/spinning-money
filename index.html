@@ -609,9 +609,16 @@
         </div>
 
         <div id="contractError" class="error-info" style="display: none;">
-            <p><strong>Contract Not Found!</strong></p>
-            <p>The contract may not be deployed or the address is incorrect.</p>
-            <p>Current address: <span id="errorAddress"></span></p>
+            <p><strong>⚠️ Contract Not Found!</strong></p>
+            <p>The lottery contract is not deployed at the expected address.</p>
+            <p>Contract address: <span id="errorAddress" style="font-family: monospace; font-size: 0.9em;"></span></p>
+            <p style="margin-top: 15px;"><strong>To fix this:</strong></p>
+            <ol style="text-align: left; margin: 10px auto; max-width: 500px;">
+                <li>Deploy the SpinAndWin.sol contract to Sepolia testnet</li>
+                <li>Update the contract address in the code</li>
+                <li>Make sure to fund the prize pool after deployment</li>
+                <li>Set up Chainlink VRF subscription</li>
+            </ol>
         </div>
 
         <div class="main-content">
@@ -874,6 +881,11 @@
         window.addEventListener('load', () => {
             checkMetaMask();
             updateSpinDisplay();
+            
+            // Debug info
+            console.log("Page loaded");
+            console.log("Contract address:", contractAddress);
+            console.log("Selected RPC:", SEPOLIA_RPC);
         });
 
         // Check if MetaMask is installed
@@ -893,17 +905,24 @@
             const maxRetries = 3;
             let lastError;
             
+            // Debug info
+            console.log("Checking contract at:", contractAddress);
+            
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     const code = await provider.getCode(contractAddress);
+                    console.log("Contract code:", code);
+                    
                     if (code === '0x') {
                         // Contract doesn't exist
+                        console.log("Contract not found!");
                         document.getElementById('contractError').style.display = 'block';
                         document.getElementById('errorAddress').textContent = contractAddress;
                         document.getElementById('spinBtn').disabled = true;
-                        showNotification('Contract not found at the specified address!', 'error');
+                        showNotification('Contract not found! Please deploy the contract first.', 'error');
                         return false;
                     }
+                    console.log("Contract found!");
                     return true;
                 } catch (error) {
                     console.error(`Error checking contract (attempt ${i + 1}):`, error);
@@ -982,6 +1001,11 @@
                     document.getElementById('connectBtn').textContent = 'Connected ✓';
                     document.getElementById('connectBtn').classList.add('connected');
                     document.getElementById('walletAddress').textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+                    
+                    // Contract yoksa bile hata mesajını göster
+                    document.getElementById('contractError').style.display = 'block';
+                    document.getElementById('errorAddress').textContent = contractAddress;
+                    showNotification('Contract not deployed! Please deploy the contract first.', 'error');
                     return;
                 }
                 
