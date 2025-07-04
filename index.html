@@ -1042,7 +1042,12 @@
                 }
                 
                 // Prize pool kontrolü
-                const prizePool = await contract.prizePool();
+                let prizePool = 0;
+    try {
+        const prizePool = await contract.prizePool();
+    } catch (error) {
+        console.error("prizePool fetch failed:", error);
+    }
                 console.log("Prize pool:", ethers.formatEther(prizePool), "ETH");
                 
                 if (prizePool == 0n) {
@@ -1211,7 +1216,13 @@
     const pool = await contract.prizePool();
     document.getElementById("pool-display").textContent = "Pool: " + ethers.formatEther(pool) + " ETH";
 
-    const prizes = await contract.getCurrentPrizes();
+    let prizes = [];
+    try {
+        const prizes = await contract.getCurrentPrizes();
+    } catch (error) {
+        console.error("getCurrentPrizes failed:", error);
+        prizes = new Array(10).fill(0); // Fallback to zeros
+    }
     let html = '';
     for (let i = 0; i < prizes.length; i++) {
       html += `Segment ${i}: ${ethers.formatEther(prizes[i])} ETH<br>`;
