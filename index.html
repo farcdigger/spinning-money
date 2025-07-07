@@ -884,7 +884,7 @@
         ];   
             
         
-        // Contract address - UPDATE THIS AFTER DEPLOYMENT
+        // Contract address - SpinAndWinV3 on Base Sepolia
         const contractAddress = "0x7f81701bd33316dbe4c2aa508e1640dcd4d2e859"; 
 
         let provider;
@@ -1058,24 +1058,50 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            console.log("Setting up event listeners...");
+            
             // Listen for spin started
-            contract.on("SpinStarted", (player, requestId) => {
+            contract.on("SpinStarted", (player, requestId, event) => {
+                console.log("SpinStarted event received:", {
+                    player: player,
+                    requestId: requestId.toString(),
+                    userAddress: userAddress
+                });
+                
                 if (player.toLowerCase() === userAddress.toLowerCase()) {
                     pendingSpins.set(requestId.toString(), 1);
-                    showNotification(`Spin started! Waiting for Chainlink VRF...`, 'info');
+                    showNotification(`Spin started! Request ID: ${requestId.toString()}`, 'info');
                     console.log("Spin started with request ID:", requestId.toString());
+                    
+                    // Start animation immediately
+                    startSpinAnimation();
                 }
             });
 
             // Listen for spin results
-            contract.on("SpinResult", async (player, requestId, reward, jpReward, prizeIndex) => {
+            contract.on("SpinResult", async (player, requestId, reward, jpReward, prizeIndex, event) => {
+                console.log("SpinResult event received:", {
+                    player: player,
+                    requestId: requestId.toString(),
+                    reward: ethers.formatEther(reward),
+                    jpReward: ethers.formatEther(jpReward),
+                    prizeIndex: prizeIndex,
+                    userAddress: userAddress
+                });
+                
                 if (player.toLowerCase() === userAddress.toLowerCase()) {
                     handleSpinResult(requestId, reward, jpReward, prizeIndex);
                 }
             });
 
             // Listen for claim events
-            contract.on("Claimed", (player, net, fee) => {
+            contract.on("Claimed", (player, net, fee, event) => {
+                console.log("Claimed event received:", {
+                    player: player,
+                    net: ethers.formatEther(net),
+                    fee: ethers.formatEther(fee)
+                });
+                
                 if (player.toLowerCase() === userAddress.toLowerCase()) {
                     const netAmount = ethers.formatEther(net);
                     const feeAmount = ethers.formatEther(fee);
@@ -1097,6 +1123,8 @@
             window.ethereum.on('chainChanged', () => {
                 location.reload();
             });
+            
+            console.log("Event listeners setup complete");
         }
 
         // Set spin count
@@ -1221,7 +1249,8 @@
                         gasLimit: gasLimit
                     });
                     
-                    showNotification(`Transaction ${i + 1} sent! Waiting for confirmation...`, 'info');
+                    console.log("Transaction hash:", tx.hash);
+                    showNotification(`Transaction ${i + 1} sent! Hash: ${tx.hash.slice(0,10)}...`, 'info');
                     
                     // Wait for transaction
                     const receipt = await tx.wait();
@@ -1230,16 +1259,31 @@
                     if (receipt.status === 0) {
                         throw new Error(`Transaction ${i + 1} failed!`);
                     }
+                    
+                    // Check for SpinStarted event in the receipt
+                    const spinStartedEvent = receipt.logs.find(log => {
+                        try {
+                            const parsed = contract.interface.parseLog(log);
+                            return parsed && parsed.name === 'SpinStarted';
+                        } catch (e) {
+                            return false;
+                        }
+                    });
+                    
+                    if (spinStartedEvent) {
+                        const parsed = contract.interface.parseLog(spinStartedEvent);
+                        console.log("SpinStarted event found in receipt:", parsed);
+                    }
                 }
                 
                 spinBtn.textContent = 'Waiting for VRF...';
                 showNotification('All spins confirmed! Waiting for results...', 'info');
                 
-                // Start spinning animation
-                startSpinAnimation();
-                
                 // Update data while waiting
                 await updateAllData();
+                
+                // Also check for recent events manually
+                checkRecentEvents();
 
             } catch (error) {
                 console.error('Spin error details:', error);
@@ -1269,30 +1313,49 @@
 
         // Start spin animation
         function startSpinAnimation() {
+            console.log("Starting spin animation...");
             const wheel = document.getElementById('wheel');
-            // Add continuous spinning
+            
+            // Reset any existing animation
             wheel.style.transition = 'none';
             wheel.style.transform = 'rotate(0deg)';
+            
+            // Force reflow
+            wheel.offsetHeight;
+            
+            // Start continuous spin
             setTimeout(() => {
-                wheel.style.transition = 'transform 1s linear infinite';
-                wheel.style.transform = 'rotate(360deg)';
+                wheel.style.transition = 'transform 2s linear infinite';
+                let rotation = 0;
+                const animateWheel = () => {
+                    rotation += 360;
+                    wheel.style.transform = `rotate(${rotation}deg)`;
+                };
+                
+                // Keep spinning
+                const spinInterval = setInterval(() => {
+                    animateWheel();
+                }, 2000);
+                
+                // Store interval ID for later cleanup
+                wheel.dataset.spinInterval = spinInterval;
             }, 10);
         }
 
         // Handle spin result
         async function handleSpinResult(requestId, reward, jpReward, prizeIndex) {
+            console.log("Handling spin result...");
             const requestIdStr = requestId.toString();
             
-            if (!pendingSpins.has(requestIdStr)) return;
-            
-            pendingSpins.delete(requestIdStr);
-            
-            // Stop continuous animation and animate to final position
+            // Clear any existing spin interval
             const wheel = document.getElementById('wheel');
-            wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            const intervalId = wheel.dataset.spinInterval;
+            if (intervalId) {
+                clearInterval(intervalId);
+                delete wheel.dataset.spinInterval;
+            }
             
             // Map prizeIndex to wheel position
-            // Prize indexes: 0-5 are wins, 6-8 are "Try Again"
             let wheelPosition;
             if (prizeIndex === 0) wheelPosition = 9;      // Jackpot segment (0.05 ETH)
             else if (prizeIndex === 1) wheelPosition = 8; // 0.01 ETH
@@ -1300,15 +1363,23 @@
             else if (prizeIndex === 3) wheelPosition = 5; // 0.0025 ETH
             else if (prizeIndex === 4) wheelPosition = 4; // 0.0005 ETH
             else if (prizeIndex === 5) wheelPosition = 3; // 0.00005 ETH
-            else wheelPosition = Math.floor(Math.random() * 3) * 3; // Random "Try Again" position (0, 1, 2 -> 0, 3, 6)
+            else {
+                // Try Again segments (indexes 6, 7, 8 map to positions 0, 1, 2, 7)
+                const tryAgainPositions = [0, 1, 2, 7];
+                wheelPosition = tryAgainPositions[Math.floor(Math.random() * tryAgainPositions.length)];
+            }
             
+            console.log(`Prize index ${prizeIndex} mapped to wheel position ${wheelPosition}`);
+            
+            // Animate to final position
             animateWheel(wheelPosition);
             
             // Show results after animation
             setTimeout(() => {
-                const totalWon = ethers.formatEther(reward) + ethers.formatEther(jpReward);
                 const mainReward = ethers.formatEther(reward);
                 const jackpotReward = ethers.formatEther(jpReward);
+                
+                console.log("Showing result modal:", { mainReward, jackpotReward, prizeIndex });
                 
                 // Show result modal
                 showResultModalV3(mainReward, jackpotReward, prizeIndex);
@@ -1319,17 +1390,37 @@
                 // Update all data
                 updateAllData();
                 
+                // Remove from pending spins
+                pendingSpins.delete(requestIdStr);
+                
             }, 4000);
         }
 
         // Animate wheel to position
         function animateWheel(position) {
+            console.log("Animating wheel to position:", position);
             const wheel = document.getElementById('wheel');
+            
+            // Get current rotation
+            const currentTransform = window.getComputedStyle(wheel).transform;
+            let currentRotation = 0;
+            if (currentTransform !== 'none') {
+                const values = currentTransform.split('(')[1].split(')')[0].split(',');
+                const a = values[0];
+                const b = values[1];
+                currentRotation = Math.round(Math.atan2(b, a) * (180/Math.PI));
+            }
+            
+            // Calculate target rotation
             const degrees = position * 36; // Each segment is 36 degrees
             const spins = 5; // Number of full rotations
-            const totalRotation = spins * 360 + degrees + Math.random() * 30 - 15;
+            const totalRotation = currentRotation + (spins * 360) + degrees + Math.random() * 30 - 15;
             
+            // Apply smooth animation
+            wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             wheel.style.transform = `rotate(${totalRotation}deg)`;
+            
+            console.log("Wheel animated from", currentRotation, "to", totalRotation, "degrees");
         }
 
         // Reset spin button
@@ -1490,6 +1581,55 @@
             return num.toFixed(3) + ' ETH';
         }
 
+        // Check recent events manually
+        async function checkRecentEvents() {
+            try {
+                console.log("Checking recent events...");
+                
+                // Get recent SpinResult events
+                const filter = contract.filters.SpinResult(userAddress);
+                const events = await contract.queryFilter(filter, -100); // Last 100 blocks
+                
+                console.log("Found", events.length, "SpinResult events");
+                
+                if (events.length > 0) {
+                    const latestEvent = events[events.length - 1];
+                    const args = latestEvent.args;
+                    console.log("Latest SpinResult event:", {
+                        player: args[0],
+                        requestId: args[1].toString(),
+                        reward: ethers.formatEther(args[2]),
+                        jpReward: ethers.formatEther(args[3]),
+                        prizeIndex: args[4]
+                    });
+                    
+                    // If this event hasn't been processed yet
+                    const requestId = args[1];
+                    if (!wheel.dataset.lastProcessedRequestId || 
+                        wheel.dataset.lastProcessedRequestId !== requestId.toString()) {
+                        
+                        wheel.dataset.lastProcessedRequestId = requestId.toString();
+                        handleSpinResult(requestId, args[2], args[3], args[4]);
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking recent events:", error);
+            }
+        }
+        
+        // Check for events periodically when waiting
+        let eventCheckInterval;
+        
+        function startEventCheck() {
+            eventCheckInterval = setInterval(checkRecentEvents, 2000);
+        }
+        
+        function stopEventCheck() {
+            if (eventCheckInterval) {
+                clearInterval(eventCheckInterval);
+                eventCheckInterval = null;
+            }
+        }
         // Show notification
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
