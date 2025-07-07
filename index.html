@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+}<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -600,7 +600,7 @@
         <div class="header">
             <h1>SPIN & WIN</h1>
             <p>Decentralized Lottery on Ethereum</p>
-            <span class="network-badge">Sepolia Testnet</span>
+            <span class="network-badge">Base Sepolia Testnet</span>
         </div>
 
         <div class="wallet-section">
@@ -614,10 +614,10 @@
             <p>Contract address: <span id="errorAddress" style="font-family: monospace; font-size: 0.9em;"></span></p>
             <p style="margin-top: 15px;"><strong>To fix this:</strong></p>
             <ol style="text-align: left; margin: 10px auto; max-width: 500px;">
-                <li>Deploy the SpinAndWin.sol contract to Sepolia testnet</li>
+                <li>Deploy the SpinAndWin.sol contract to Base Sepolia testnet</li>
                 <li>Update the contract address in the code</li>
                 <li>Make sure to fund the prize pool after deployment</li>
-                <li>Set up Chainlink VRF subscription</li>
+                <li>Set up Chainlink VRF subscription on Base Sepolia</li>
             </ol>
         </div>
 
@@ -625,9 +625,9 @@
             <!-- Left Section - Wheel & Pool -->
             <div class="left-section">
                 <div class="pool-info pulse">
-                    <div class="pool-label">PRIZE POOL</div>
+                    <div class="pool-label">TOTAL POOL</div>
                     <div class="pool-amount" id="prizePool">0 ETH</div>
-                    <div class="pool-subtext">Grows with every spin!</div>
+                    <div class="pool-subtext">Prize + Jackpot Pools</div>
                 </div>
 
                 <div class="wheel-container">
@@ -635,58 +635,62 @@
                     <div id="wheel" class="wheel">
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
+                                <span class="percentage">TRY</span>
+                                <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
+                                <span class="percentage">TRY</span>
+                                <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
+                                <span class="percentage">TRY</span>
+                                <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">5%</span>
-                                <span class="eth-amount" id="prize3">0 ETH</span>
+                                <span class="percentage">MINI</span>
+                                <span class="eth-amount" id="prize3">0.00005 ETH</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">10%</span>
-                                <span class="eth-amount" id="prize4">0 ETH</span>
+                                <span class="percentage">BRONZE</span>
+                                <span class="eth-amount" id="prize4">0.0005 ETH</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">15%</span>
-                                <span class="eth-amount" id="prize5">0 ETH</span>
+                                <span class="percentage">SILVER</span>
+                                <span class="eth-amount" id="prize5">0.0025 ETH</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">20%</span>
-                                <span class="eth-amount" id="prize6">0 ETH</span>
+                                <span class="percentage">GOLD</span>
+                                <span class="eth-amount" id="prize6">0.005 ETH</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">LOSE</span>
+                                <span class="percentage">TRY</span>
+                                <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
-                                <span class="percentage">30%</span>
-                                <span class="eth-amount" id="prize8">0 ETH</span>
+                                <span class="percentage">DIAMOND</span>
+                                <span class="eth-amount" id="prize8">0.01 ETH</span>
                             </div>
                         </div>
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">JACKPOT</span>
-                                <span class="eth-amount" id="prize9">0 ETH</span>
+                                <span class="eth-amount" id="prize9">0.05 ETH</span>
                             </div>
                         </div>
                     </div>
@@ -724,7 +728,7 @@
                     <div class="cost-breakdown">
                         <div class="cost-row">
                             <span>Price per spin:</span>
-                            <span>0.00025 ETH</span>
+                            <span>0.0005 ETH</span>
                         </div>
                         <div class="cost-row">
                             <span>Number of spins:</span>
@@ -732,7 +736,7 @@
                         </div>
                         <div class="cost-row total">
                             <span>Total Cost:</span>
-                            <span id="totalCost">0.00025 ETH</span>
+                            <span id="totalCost">0.0005 ETH</span>
                         </div>
                     </div>
 
@@ -769,7 +773,7 @@
                         <h3>Your Rewards</h3>
                         <div id="claimSection" style="display: none;">
                             <div class="pending-amount" id="pendingReward">0 ETH</div>
-                            <p style="opacity: 0.7; margin-bottom: 15px;">3% fee on withdrawal</p>
+                            <p style="opacity: 0.7; margin-bottom: 15px;">2% fee on withdrawal</p>
                             <button class="claim-btn" onclick="claimReward()">Claim Now</button>
                         </div>
                         <div id="noRewardsText" style="text-align: center; opacity: 0.6; padding: 20px;">
@@ -787,28 +791,32 @@
                     <h3>Current Prizes</h3>
                     <div class="prizes-table">
                         <div class="prize-row jackpot">
-                            <span>🎯 JACKPOT (50%)</span>
-                            <span id="dynamicPrize9">0 ETH</span>
+                            <span>🎯 JACKPOT (0.1‰)</span>
+                            <span id="dynamicPrize9">0.05 ETH</span>
                         </div>
                         <div class="prize-row">
-                            <span>💎 30% of Pool</span>
-                            <span id="dynamicPrize8">0 ETH</span>
+                            <span>💎 Diamond (0.2‰)</span>
+                            <span id="dynamicPrize8">0.01 ETH</span>
                         </div>
                         <div class="prize-row">
-                            <span>🌟 20% of Pool</span>
-                            <span id="dynamicPrize6">0 ETH</span>
+                            <span>🌟 Gold (0.5‰)</span>
+                            <span id="dynamicPrize6">0.005 ETH</span>
                         </div>
                         <div class="prize-row">
-                            <span>⭐ 15% of Pool</span>
-                            <span id="dynamicPrize5">0 ETH</span>
+                            <span>⭐ Silver (1‰)</span>
+                            <span id="dynamicPrize5">0.0025 ETH</span>
                         </div>
                         <div class="prize-row">
-                            <span>✨ 10% of Pool</span>
-                            <span id="dynamicPrize4">0 ETH</span>
+                            <span>✨ Bronze (5‰)</span>
+                            <span id="dynamicPrize4">0.0005 ETH</span>
                         </div>
                         <div class="prize-row">
-                            <span>🔸 5% of Pool</span>
-                            <span id="dynamicPrize3">0 ETH</span>
+                            <span>🔸 Mini (20‰)</span>
+                            <span id="dynamicPrize3">0.00005 ETH</span>
+                        </div>
+                        <div class="prize-row" style="margin-top: 15px; background: rgba(255, 215, 0, 0.1);">
+                            <span>🎰 Jackpot Chances</span>
+                            <span style="font-size: 0.9em;">1‰: 30% | 2‰: 15% | 5‰: 5%</span>
                         </div>
                     </div>
                 </div>
@@ -832,42 +840,50 @@
     <div id="notification" class="notification"></div>
 
     <script>
-        // Sepolia Testnet Configuration
-        const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111 in hex
+        // Base Sepolia Testnet Configuration
+        const BASE_SEPOLIA_CHAIN_ID = '0x14a34'; // 84532 in hex
         
-        // Alternatif RPC seçenekleri - hangisi çalışırsa onu kullanın
-        const SEPOLIA_RPCS = [
-            'https://rpc.sepolia.org',
-            'https://eth-sepolia.public.blastapi.io',
-            'https://sepolia.gateway.tenderly.co',
-            'https://ethereum-sepolia-rpc.publicnode.com',
-            'https://1rpc.io/sepolia',
-            'https://eth-sepolia-public.unifra.io'
+        // Base Sepolia RPC endpoints
+        const BASE_SEPOLIA_RPCS = [
+            'https://sepolia.base.org',
+            'https://base-sepolia-rpc.publicnode.com',
+            'https://base-sepolia.gateway.tenderly.co',
+            'https://base-sepolia.blockpi.network/v1/rpc/public'
         ];
         
         // Rastgele bir RPC seç (yük dağıtımı için)
-        const SEPOLIA_RPC = SEPOLIA_RPCS[Math.floor(Math.random() * SEPOLIA_RPCS.length)];
+        const BASE_SEPOLIA_RPC = BASE_SEPOLIA_RPCS[Math.floor(Math.random() * BASE_SEPOLIA_RPCS.length)];
         
-        // Contract ABI
+        // Contract ABI - SpinAndWinV3
         const contractABI = [
-            "function spin(uint256 spinCount) payable",
-            "function claimReward()",
-            "function getUserData(address) view returns (uint256, uint256, uint256, uint256, uint256, uint256)",
+            // Main functions
+            "function spin() payable",
+            "function claim()",
+            
+            // View functions
+            "function users(address) view returns (uint256 spins, uint256 claimable, uint256 claimed)",
             "function prizePool() view returns (uint256)",
-            "function getContractBalance() view returns (uint256)",
-            "function getCurrentPrizes() view returns (uint256[10])",
-            "function calculateSpinCost(uint256) pure returns (uint256)",
+            "function jackpotPool() view returns (uint256)",
+            "function ownerFees() view returns (uint256)",
+            "function SPIN_PRICE() view returns (uint256)",
+            "function MAX_JACKPOT() view returns (uint256)",
+            "function spinFeeBP() view returns (uint16)",
+            "function claimFeeBP() view returns (uint16)",
+            "function jackpotShareBP() view returns (uint16)",
+            
+            // Events
+            "event SpinStarted(address indexed player, uint256 indexed requestId)",
+            "event SpinResult(address indexed player, uint256 indexed requestId, uint256 reward, uint256 jpReward, uint8 prizeIndex)",
+            "event Claimed(address indexed player, uint256 net, uint256 fee)",
+            
+            // Owner functions (for display purposes)
             "function owner() view returns (address)",
-            "function s_subscriptionId() view returns (uint256)",
-            "function keyHash() view returns (bytes32)",
-            "event SpinRequested(address indexed player, uint256 requestId, uint256 spinCount)",
-            "event SpinResult(address indexed player, uint256 requestId, uint256 spinCount, uint256 totalPrize, uint256[] wheelPositions, uint256[] prizes)",
-            "event RewardClaimed(address indexed player, uint256 amount, uint256 fee)"
+            "function paused() view returns (bool)"
         ];   
             
         
         // Contract address - UPDATE THIS AFTER DEPLOYMENT
-        const contractAddress = "0x557d743c02fd894531332f8807e47d08348ef04d"; 
+        const contractAddress = "0x7f81701bd33316dbe4c2aa508e1640dcd4d2e859"; 
 
         let provider;
         let signer;
@@ -885,7 +901,9 @@
             // Debug info
             console.log("Page loaded");
             console.log("Contract address:", contractAddress);
-            console.log("Selected RPC:", SEPOLIA_RPC);
+            console.log("Selected RPC:", BASE_SEPOLIA_RPC);
+            console.log("Chain ID:", BASE_SEPOLIA_CHAIN_ID);
+            console.log("New contract: SpinAndWinV3");
         });
 
         // Check if MetaMask is installed
@@ -951,15 +969,15 @@
                 // Request account access
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
                 
-                // Check if on Sepolia Testnet
+                // Check if on Base Sepolia Testnet
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         
-                if (chainId !== SEPOLIA_CHAIN_ID) {
-                    // Switch to Sepolia
+                if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+                    // Switch to Base Sepolia
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
-                            params: [{ chainId: SEPOLIA_CHAIN_ID }],
+                            params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
                         });
                     } catch (switchError) {
                         // This error code indicates that the chain has not been added to MetaMask
@@ -968,23 +986,23 @@
                                 await window.ethereum.request({
                                     method: 'wallet_addEthereumChain',
                                     params: [{
-                                        chainId: SEPOLIA_CHAIN_ID,
-                                        chainName: 'Sepolia Testnet',
+                                        chainId: BASE_SEPOLIA_CHAIN_ID,
+                                        chainName: 'Base Sepolia',
                                         nativeCurrency: {
                                             name: 'Ethereum',
                                             symbol: 'ETH',
                                             decimals: 18
                                         },
-                                        rpcUrls: [SEPOLIA_RPC],
-                                        blockExplorerUrls: ['https://sepolia.etherscan.io/']
+                                        rpcUrls: [BASE_SEPOLIA_RPC],
+                                        blockExplorerUrls: ['https://sepolia.basescan.org/']
                                     }],
                                 });
                             } catch (addError) {
-                                showNotification('Failed to add Sepolia network', 'error');
+                                showNotification('Failed to add Base Sepolia network', 'error');
                                 return;
                             }
                         } else {
-                            showNotification('Failed to switch to Sepolia network', 'error');
+                            showNotification('Failed to switch to Base Sepolia network', 'error');
                             return;
                         }
                     }
@@ -1025,7 +1043,7 @@
                 // Load initial data
                 await updateAllData();
 
-                showNotification('Wallet connected to Sepolia!', 'success');
+                showNotification('Wallet connected to Base Sepolia!', 'success');
 
                 // Auto-update data every 5 seconds
                 setInterval(updateAllData, 5000);
@@ -1038,25 +1056,26 @@
 
         // Setup event listeners
         function setupEventListeners() {
-            // Listen for spin requests
-            contract.on("SpinRequested", (player, requestId, spinCount) => {
+            // Listen for spin started
+            contract.on("SpinStarted", (player, requestId) => {
                 if (player.toLowerCase() === userAddress.toLowerCase()) {
-                    pendingSpins.set(requestId.toString(), spinCount);
-                    showNotification(`Spin requested! Waiting for Chainlink VRF...`, 'info');
+                    pendingSpins.set(requestId.toString(), 1);
+                    showNotification(`Spin started! Waiting for Chainlink VRF...`, 'info');
+                    console.log("Spin started with request ID:", requestId.toString());
                 }
             });
 
             // Listen for spin results
-            contract.on("SpinResult", async (player, requestId, spinCount, totalPrize, wheelPositions, prizes) => {
+            contract.on("SpinResult", async (player, requestId, reward, jpReward, prizeIndex) => {
                 if (player.toLowerCase() === userAddress.toLowerCase()) {
-                    handleSpinResult(requestId, spinCount, totalPrize, wheelPositions, prizes);
+                    handleSpinResult(requestId, reward, jpReward, prizeIndex);
                 }
             });
 
             // Listen for claim events
-            contract.on("RewardClaimed", (player, amount, fee) => {
+            contract.on("Claimed", (player, net, fee) => {
                 if (player.toLowerCase() === userAddress.toLowerCase()) {
-                    const netAmount = ethers.formatEther(amount);
+                    const netAmount = ethers.formatEther(net);
                     const feeAmount = ethers.formatEther(fee);
                     showNotification(`Successfully claimed ${netAmount} ETH! (Fee: ${feeAmount} ETH)`, 'success');
                     updateAllData();
@@ -1116,8 +1135,8 @@
             document.getElementById('spinNumber').textContent = spinCount;
             document.getElementById('spinCountDisplay').textContent = spinCount;
             
-            const cost = spinCount * 0.00025;
-            document.getElementById('totalCost').textContent = cost.toFixed(5) + ' ETH';
+            const cost = spinCount * 0.0005; // 0.0005 ETH per spin for V3
+            document.getElementById('totalCost').textContent = cost.toFixed(4) + ' ETH';
         }
 
         // Spin function
@@ -1144,60 +1163,75 @@
                     throw new Error("Contract not found!");
                 }
                 
-                // Cost calculation
-                const cost = await contract.calculateSpinCost(spinCount);
-                console.log("Cost:", ethers.formatEther(cost), "ETH");
+                // Get spin price
+                const spinPrice = await contract.SPIN_PRICE();
+                console.log("Spin price:", ethers.formatEther(spinPrice), "ETH");
+                
+                // Calculate total cost
+                const totalCost = spinPrice * BigInt(spinCount);
+                console.log("Total cost:", ethers.formatEther(totalCost), "ETH");
                 
                 // Balance check
                 const balance = await provider.getBalance(userAddress);
                 console.log("User balance:", ethers.formatEther(balance), "ETH");
                 
-                if (balance < cost) {
+                if (balance < totalCost) {
                     throw new Error("Insufficient ETH balance");
+                }
+                
+                // Check if paused
+                const isPaused = await contract.paused();
+                if (isPaused) {
+                    throw new Error("Contract is paused");
                 }
                 
                 // Prize pool check
                 const prizePool = await contract.prizePool();
+                const jackpotPool = await contract.jackpotPool();
                 console.log("Prize pool:", ethers.formatEther(prizePool), "ETH");
+                console.log("Jackpot pool:", ethers.formatEther(jackpotPool), "ETH");
                 
-                if (prizePool == 0n) {
-                    throw new Error("Prize pool is empty. Please wait for pool to be funded.");
-                }
-
-                // Send transaction with proper gas estimation
-                console.log("Sending transaction...");
+                // For V3, we do multiple transactions for multiple spins
+                spinBtn.textContent = `Spinning (1/${spinCount})...`;
                 
-                // Estimate gas first
-                let gasEstimate;
-                try {
-                    gasEstimate = await contract.spin.estimateGas(spinCount, { value: cost });
-                    console.log("Gas estimate:", gasEstimate.toString());
-                } catch (gasError) {
-                    console.error("Gas estimation failed:", gasError);
-                    throw new Error("Transaction would fail. Check contract state.");
-                }
-                
-                // Add 20% buffer to gas estimate
-                const gasLimit = gasEstimate * 120n / 100n;
-                
-                const tx = await contract.spin(spinCount, { 
-                    value: cost,
-                    gasLimit: gasLimit
-                });
-                
-                spinBtn.textContent = 'Confirming...';
-                showNotification('Transaction sent! Waiting for confirmation...', 'info');
-                
-                // Wait for transaction
-                const receipt = await tx.wait();
-                console.log("Transaction receipt:", receipt);
-                
-                if (receipt.status === 0) {
-                    throw new Error("Transaction failed!");
+                for (let i = 0; i < spinCount; i++) {
+                    if (i > 0) {
+                        spinBtn.textContent = `Spinning (${i + 1}/${spinCount})...`;
+                    }
+                    
+                    console.log(`Sending spin ${i + 1} of ${spinCount}...`);
+                    
+                    // Estimate gas first
+                    let gasEstimate;
+                    try {
+                        gasEstimate = await contract.spin.estimateGas({ value: spinPrice });
+                        console.log("Gas estimate:", gasEstimate.toString());
+                    } catch (gasError) {
+                        console.error("Gas estimation failed:", gasError);
+                        throw new Error("Transaction would fail. Check contract state.");
+                    }
+                    
+                    // Add 20% buffer to gas estimate
+                    const gasLimit = gasEstimate * 120n / 100n;
+                    
+                    const tx = await contract.spin({ 
+                        value: spinPrice,
+                        gasLimit: gasLimit
+                    });
+                    
+                    showNotification(`Transaction ${i + 1} sent! Waiting for confirmation...`, 'info');
+                    
+                    // Wait for transaction
+                    const receipt = await tx.wait();
+                    console.log(`Transaction ${i + 1} receipt:`, receipt);
+                    
+                    if (receipt.status === 0) {
+                        throw new Error(`Transaction ${i + 1} failed!`);
+                    }
                 }
                 
                 spinBtn.textContent = 'Waiting for VRF...';
-                showNotification('Transaction confirmed! Waiting for random number...', 'info');
+                showNotification('All spins confirmed! Waiting for results...', 'info');
                 
                 // Start spinning animation
                 startSpinAnimation();
@@ -1212,8 +1246,8 @@
                 let errorMessage = 'Spin failed: ';
                 if (error.message.includes("Insufficient ETH")) {
                     errorMessage += "Not enough ETH in wallet";
-                } else if (error.message.includes("Prize pool is empty")) {
-                    errorMessage += "Prize pool needs funding";
+                } else if (error.message.includes("paused")) {
+                    errorMessage += "Game is paused";
                 } else if (error.message.includes("user rejected")) {
                     errorMessage += "Transaction cancelled";
                 } else if (error.message.includes("Contract not found")) {
@@ -1244,7 +1278,7 @@
         }
 
         // Handle spin result
-        async function handleSpinResult(requestId, spinCount, totalPrize, wheelPositions, prizes) {
+        async function handleSpinResult(requestId, reward, jpReward, prizeIndex) {
             const requestIdStr = requestId.toString();
             
             if (!pendingSpins.has(requestIdStr)) return;
@@ -1255,17 +1289,27 @@
             const wheel = document.getElementById('wheel');
             wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             
-            // For multiple spins, show the last position
-            const finalPosition = Number(wheelPositions[wheelPositions.length - 1]);
-            animateWheel(finalPosition);
+            // Map prizeIndex to wheel position
+            // Prize indexes: 0-5 are wins, 6-8 are "Try Again"
+            let wheelPosition;
+            if (prizeIndex === 0) wheelPosition = 9;      // Jackpot segment (0.05 ETH)
+            else if (prizeIndex === 1) wheelPosition = 8; // 0.01 ETH
+            else if (prizeIndex === 2) wheelPosition = 6; // 0.005 ETH
+            else if (prizeIndex === 3) wheelPosition = 5; // 0.0025 ETH
+            else if (prizeIndex === 4) wheelPosition = 4; // 0.0005 ETH
+            else if (prizeIndex === 5) wheelPosition = 3; // 0.00005 ETH
+            else wheelPosition = Math.floor(Math.random() * 3) * 3; // Random "Try Again" position (0, 1, 2 -> 0, 3, 6)
+            
+            animateWheel(wheelPosition);
             
             // Show results after animation
             setTimeout(() => {
-                const totalWon = ethers.formatEther(totalPrize);
-                const wins = prizes.filter(p => p > 0n).length;
+                const totalWon = ethers.formatEther(reward) + ethers.formatEther(jpReward);
+                const mainReward = ethers.formatEther(reward);
+                const jackpotReward = ethers.formatEther(jpReward);
                 
                 // Show result modal
-                showResultModal(spinCount, wins, totalWon);
+                showResultModalV3(mainReward, jackpotReward, prizeIndex);
                 
                 // Reset UI
                 resetSpinButton();
@@ -1295,23 +1339,36 @@
             spinBtn.textContent = 'SPIN NOW';
         }
 
-        // Show result modal
-        function showResultModal(spinCount, wins, totalWon) {
+        // Show result modal for V3
+        function showResultModalV3(mainReward, jackpotReward, prizeIndex) {
             const modal = document.getElementById('resultModal');
             const title = document.getElementById('resultTitle');
             const amount = document.getElementById('resultAmount');
             const details = document.getElementById('resultDetails');
             
-            if (wins > 0) {
+            const mainRewardNum = parseFloat(mainReward);
+            const jackpotRewardNum = parseFloat(jackpotReward);
+            const totalReward = mainRewardNum + jackpotRewardNum;
+            
+            if (totalReward > 0) {
                 title.textContent = '🎉 Winner!';
                 title.style.color = '#4CAF50';
-                amount.textContent = totalWon + ' ETH';
-                details.textContent = `You won ${wins} out of ${spinCount} spins!`;
+                amount.textContent = totalReward.toFixed(6) + ' ETH';
+                
+                let detailText = '';
+                if (mainRewardNum > 0) {
+                    detailText += `Prize: ${mainReward} ETH`;
+                }
+                if (jackpotRewardNum > 0) {
+                    if (detailText) detailText += ' + ';
+                    detailText += `Jackpot: ${jackpotReward} ETH`;
+                }
+                details.textContent = detailText;
             } else {
-                title.textContent = '😢 Better Luck Next Time!';
+                title.textContent = '😢 Try Again!';
                 title.style.color = '#f44336';
                 amount.textContent = '0 ETH';
-                details.textContent = `You lost all ${spinCount} spins. Try again!`;
+                details.textContent = 'Better luck next time!';
             }
             
             modal.style.display = 'flex';
@@ -1329,15 +1386,20 @@
                 claimBtn.disabled = true;
                 claimBtn.textContent = 'Processing...';
 
-                const tx = await contract.claimReward();
+                const tx = await contract.claim();
                 showNotification('Claiming rewards...', 'info');
                 await tx.wait();
 
-                showNotification('Rewards claimed successfully!', 'success');
-                await updateAllData();
+                // Success is handled by the Claimed event
             } catch (error) {
                 console.error('Claim error:', error);
-                showNotification('Claim failed: ' + error.message, 'error');
+                let errorMessage = 'Claim failed: ';
+                if (error.message.includes("nothing to claim")) {
+                    errorMessage += "No rewards to claim";
+                } else {
+                    errorMessage += error.message;
+                }
+                showNotification(errorMessage, 'error');
             } finally {
                 const claimBtn = event.target;
                 claimBtn.disabled = false;
