@@ -193,38 +193,51 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .wheel-segment:nth-child(1) { background: #FF0000; transform: rotate(0deg); }
-        .wheel-segment:nth-child(2) { background: #333333; transform: rotate(36deg); }
-        .wheel-segment:nth-child(3) { background: #FF0000; transform: rotate(72deg); }
-        .wheel-segment:nth-child(4) { background: #4CAF50; transform: rotate(108deg); }
-        .wheel-segment:nth-child(5) { background: #2196F3; transform: rotate(144deg); }
-        .wheel-segment:nth-child(6) { background: #9C27B0; transform: rotate(180deg); }
-        .wheel-segment:nth-child(7) { background: #FF9800; transform: rotate(216deg); }
-        .wheel-segment:nth-child(8) { background: #333333; transform: rotate(252deg); }
-        .wheel-segment:nth-child(9) { background: #00BCD4; transform: rotate(288deg); }
-        .wheel-segment:nth-child(10) { background: #FFD700; transform: rotate(324deg); }
+        .wheel-segment:nth-child(1) { background: #FF0000; transform: rotate(0deg); }      /* TRY AGAIN - Red */
+        .wheel-segment:nth-child(2) { background: #333333; transform: rotate(36deg); }     /* TRY AGAIN - Dark */
+        .wheel-segment:nth-child(3) { background: #FF0000; transform: rotate(72deg); }     /* TRY AGAIN - Red */
+        .wheel-segment:nth-child(4) { background: #4CAF50; transform: rotate(108deg); }    /* MINI - Green */
+        .wheel-segment:nth-child(5) { background: #CD7F32; transform: rotate(144deg); }    /* BRONZE - Bronze */
+        .wheel-segment:nth-child(6) { background: #C0C0C0; transform: rotate(180deg); }    /* SILVER - Silver */
+        .wheel-segment:nth-child(7) { background: #FFD700; transform: rotate(216deg); }    /* GOLD - Gold */
+        .wheel-segment:nth-child(8) { background: #333333; transform: rotate(252deg); }    /* TRY AGAIN - Dark */
+        .wheel-segment:nth-child(9) { background: #00BCD4; transform: rotate(288deg); }    /* DIAMOND - Cyan */
+        .wheel-segment:nth-child(10) { background: #9C27B0; transform: rotate(324deg); }   /* JACKPOT - Purple */
 
         .wheel-label {
             position: absolute;
-            transform: rotate(-18deg) translateX(120px);
+            top: 15%;
+            left: 55%;
+            transform: rotate(-18deg);
             font-weight: bold;
-            font-size: 0.9rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 0.8rem;
+            text-shadow: 
+                2px 2px 4px rgba(0,0,0,0.9),
+                -1px -1px 2px rgba(0,0,0,0.5),
+                0 0 10px rgba(0,0,0,0.8);
             text-align: center;
             line-height: 1.2;
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
         }
 
         .wheel-label .percentage {
-            font-size: 1.1rem;
+            font-size: 1rem;
             display: block;
+            margin-bottom: 2px;
         }
 
         .wheel-label .eth-amount {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             opacity: 0.9;
-            margin-top: 2px;
+            display: block;
         }
 
         .pointer {
@@ -627,14 +640,26 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .pulse {
+        /* Special styling for JACKPOT segment */
+        .wheel-segment:nth-child(10) .wheel-label {
+            font-size: 0.9rem;
             animation: pulse 2s infinite;
+        }
+        
+        /* Better contrast for silver segment */
+        .wheel-segment:nth-child(6) .wheel-label {
+            color: #333;
+            text-shadow: 
+                1px 1px 2px rgba(255,255,255,0.8),
+                -1px -1px 1px rgba(255,255,255,0.5);
+        }
+        
+        /* Better contrast for gold segment */
+        .wheel-segment:nth-child(7) .wheel-label {
+            color: #333;
+            text-shadow: 
+                1px 1px 2px rgba(255,255,255,0.8),
+                -1px -1px 1px rgba(255,255,255,0.5);
         }
 
         @media (max-width: 1024px) {
@@ -650,6 +675,12 @@
             .wheel-container {
                 width: 350px;
                 height: 350px;
+            }
+            
+            .wheel-label {
+                font-size: 0.7rem;
+                top: 18%;
+                left: 52%;
             }
         }
 
@@ -712,64 +743,74 @@
                 <div class="wheel-container">
                     <div class="pointer"></div>
                     <div id="wheel" class="wheel">
+                        <!-- Segment 0: TRY AGAIN -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">TRY</span>
                                 <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
+                        <!-- Segment 1: TRY AGAIN -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">TRY</span>
                                 <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
+                        <!-- Segment 2: TRY AGAIN -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">TRY</span>
                                 <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
+                        <!-- Segment 3: MINI 0.00005 ETH -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">MINI</span>
-                                <span class="eth-amount" id="prize3">0.00005 ETH</span>
+                                <span class="eth-amount">0.00005</span>
                             </div>
                         </div>
+                        <!-- Segment 4: BRONZE 0.0005 ETH -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">BRONZE</span>
-                                <span class="eth-amount" id="prize4">0.0005 ETH</span>
+                                <span class="eth-amount">0.0005</span>
                             </div>
                         </div>
+                        <!-- Segment 5: SILVER 0.0025 ETH -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">SILVER</span>
-                                <span class="eth-amount" id="prize5">0.0025 ETH</span>
+                                <span class="eth-amount">0.0025</span>
                             </div>
                         </div>
+                        <!-- Segment 6: GOLD 0.005 ETH -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">GOLD</span>
-                                <span class="eth-amount" id="prize6">0.005 ETH</span>
+                                <span class="eth-amount">0.005</span>
                             </div>
                         </div>
+                        <!-- Segment 7: TRY AGAIN -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">TRY</span>
                                 <span class="eth-amount">AGAIN</span>
                             </div>
                         </div>
+                        <!-- Segment 8: DIAMOND 0.01 ETH -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">DIAMOND</span>
-                                <span class="eth-amount" id="prize8">0.01 ETH</span>
+                                <span class="eth-amount">0.01</span>
                             </div>
                         </div>
+                        <!-- Segment 9: JACKPOT 0.05 ETH -->
                         <div class="wheel-segment">
                             <div class="wheel-label">
                                 <span class="percentage">JACKPOT</span>
-                                <span class="eth-amount" id="prize9">0.05 ETH</span>
+                                <span class="eth-amount">0.05</span>
                             </div>
                         </div>
                     </div>
