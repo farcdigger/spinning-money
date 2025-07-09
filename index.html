@@ -1374,31 +1374,35 @@
             }
         }
 
-        // Start spin animation - SIMPLE VERSION
+        // Start spin animation - SMOOTHER VERSION
         function startSpinAnimation() {
             console.log("Starting spin animation...");
             const wheel = document.getElementById('wheel');
             
-            // Remove any existing classes/styles
-            wheel.classList.remove('spinning');
-            wheel.style.animation = '';
-            wheel.style.transform = 'rotate(0deg)';
+            // Remove any existing animation
+            wheel.style.transition = 'none';
             
-            // Force browser to recognize the change
-            void wheel.offsetWidth;
+            // Get current position
+            const currentTransform = window.getComputedStyle(wheel).transform;
+            let startRotation = 0;
+            if (currentTransform !== 'none') {
+                const values = currentTransform.split('(')[1].split(')')[0].split(',');
+                const a = parseFloat(values[0]);
+                const b = parseFloat(values[1]);
+                startRotation = Math.round(Math.atan2(b, a) * (180/Math.PI));
+            }
             
-            // Apply rotation directly
-            let rotation = 0;
+            // Apply continuous rotation
+            let rotation = startRotation;
             const spinInterval = setInterval(() => {
-                rotation += 10;
+                rotation += 15; // Faster rotation
                 wheel.style.transform = `rotate(${rotation}deg)`;
-                wheel.style.transition = 'none';
-            }, 50);
+            }, 30); // Smoother animation
             
             // Store interval to stop later
             window.currentSpinInterval = spinInterval;
             
-            console.log("Spin animation started with interval");
+            console.log("Spin animation started");
         }
 
         // Handle spin result - IMMEDIATE STOP VERSION
@@ -1594,35 +1598,40 @@
             }
         }
 
-        // Update all data
+        // Update all data - FIXED VERSION
         async function updateAllData() {
             if (!contract || !userAddress) return;
             
             try {
-                // Try to get user data, but continue if it fails
+                // Get user data from V3 contract
                 let userData;
                 try {
-                    userData = await contract.getUserData(userAddress);
+                    userData = await contract.users(userAddress);
+                    console.log("User data:", userData);
                 } catch (error) {
-                    console.error("getUserData failed, using defaults:", error);
-                    userData = [0n, 0n, 0n, 0n, 0n, 0n];
+                    console.error("users() failed:", error);
+                    userData = { spins: 0n, claimable: 0n, claimed: 0n };
                 }
                 
-                const [pendingReward, totalWins, totalSpins, totalWagered, totalClaimed, winRate] = userData;
+                const { spins, claimable, claimed } = userData;
 
                 // Update user stats
-                document.getElementById('totalSpins').textContent = totalSpins.toString();
-                document.getElementById('totalWins').textContent = totalWins.toString();
-                document.getElementById('winRate').textContent = winRate.toString() + '%';
+                document.getElementById('totalSpins').textContent = spins.toString();
+                document.getElementById('totalWins').textContent = '-'; // V3 doesn't track win count
+                document.getElementById('winRate').textContent = '-'; // V3 doesn't track win rate
+                
+                // Calculate total wagered (0.0005 ETH per spin)
+                const spinPrice = 500000000000000n; // 0.0005 ETH in wei
+                const totalWagered = spins * spinPrice;
                 document.getElementById('totalWagered').textContent = formatEther(totalWagered);
-                document.getElementById('totalClaimed').textContent = formatEther(totalClaimed);
+                document.getElementById('totalClaimed').textContent = formatEther(claimed);
 
                 // Update pending rewards
-                const pendingEth = ethers.formatEther(pendingReward);
+                const pendingEth = ethers.formatEther(claimable);
                 document.getElementById('pendingReward').textContent = pendingEth + ' ETH';
                 
                 // Show/hide claim section
-                if (pendingReward > 0n) {
+                if (claimable > 0n) {
                     document.getElementById('claimSection').style.display = 'block';
                     document.getElementById('noRewardsText').style.display = 'none';
                 } else {
@@ -1630,35 +1639,26 @@
                     document.getElementById('noRewardsText').style.display = 'block';
                 }
 
-                // Get contract data
+                // Get pool data
                 let prizePool = 0n;
-                let currentPrizes = new Array(10).fill(0n);
+                let jackpotPool = 0n;
                 
                 try {
                     prizePool = await contract.prizePool();
+                    jackpotPool = await contract.jackpotPool();
+                    console.log("Prize pool:", ethers.formatEther(prizePool), "ETH");
+                    console.log("Jackpot pool:", ethers.formatEther(jackpotPool), "ETH");
                 } catch (error) {
-                    console.error("prizePool failed:", error);
+                    console.error("Pool data failed:", error);
                 }
+
+                // Update pool displays
+                const totalPool = prizePool + jackpotPool;
+                document.getElementById('prizePool').textContent = formatEther(totalPool);
                 
-                try {
-                    currentPrizes = await contract.getCurrentPrizes();
-                } catch (error) {
-                    console.error("getCurrentPrizes failed:", error);
-                }
-
-                // Update pool display
-                document.getElementById('prizePool').textContent = formatEther(prizePool);
-
-                // Update prize displays
-                const prizeIndices = [3, 4, 5, 6, 8, 9];
-                prizeIndices.forEach(i => {
-                    const prizeElement = document.getElementById(`prize${i}`);
-                    const dynamicElement = document.getElementById(`dynamicPrize${i}`);
-                    const amount = formatEther(currentPrizes[i]);
-                    
-                    if (prizeElement) prizeElement.textContent = amount;
-                    if (dynamicElement) dynamicElement.textContent = amount;
-                });
+                // Update pool breakdown
+                document.getElementById('poolBreakdown').textContent = 
+                    `Prize: ${formatEther(prizePool)} | Jackpot: ${formatEther(jackpotPool)}`;
 
             } catch (error) {
                 console.error('Update error:', error);
@@ -1675,24 +1675,17 @@
             return num.toFixed(3) + ' ETH';
         }
 
-        // Poll for spin result - FIXED VERSION WITH EVENT DETECTION
+        // Poll for spin result - IMPROVED WITH BLOCK SCANNING
         async function startResultPolling(requestId) {
             console.log("=== STARTING RESULT POLLING ===");
             console.log("Request ID:", requestId.toString());
             
-            // Store initial balance
-            let initialBalance;
-            try {
-                const userData = await contract.users(userAddress);
-                initialBalance = userData.claimable;
-                console.log("Initial claimable balance:", ethers.formatEther(initialBalance));
-            } catch (error) {
-                console.error("Error getting initial balance:", error);
-                initialBalance = 0n;
-            }
+            // Store transaction block number
+            const startBlock = await provider.getBlockNumber();
+            console.log("Starting from block:", startBlock);
             
             let attempts = 0;
-            const maxAttempts = 30;
+            const maxAttempts = 60; // Increase to 60 seconds
             let resultFound = false;
             
             const pollInterval = setInterval(async () => {
@@ -1700,58 +1693,83 @@
                 console.log(`Poll attempt ${attempts}/${maxAttempts}`);
                 
                 try {
-                    // Method 1: Direct event check with requestId
-                    const filter = contract.filters.SpinResult(userAddress, requestId);
-                    const events = await contract.queryFilter(filter, -100);
+                    // Get current block
+                    const currentBlock = await provider.getBlockNumber();
+                    console.log("Current block:", currentBlock);
                     
-                    if (events.length > 0 && !resultFound) {
-                        console.log("✅ FOUND SPINRESULT EVENT WITH REQUEST ID!");
-                        clearInterval(pollInterval);
-                        resultFound = true;
+                    // Method 1: Try direct filter first
+                    try {
+                        const filter = contract.filters.SpinResult(userAddress);
+                        const events = await contract.queryFilter(filter, startBlock, currentBlock);
                         
-                        const event = events[0];
-                        const args = event.args;
+                        console.log(`Found ${events.length} SpinResult events between blocks ${startBlock}-${currentBlock}`);
                         
-                        console.log("Event details:", {
-                            reward: ethers.formatEther(args[2]),
-                            jpReward: ethers.formatEther(args[3]),
-                            prizeIndex: args[4].toString()
-                        });
-                        
-                        // Process with correct data
-                        handleSpinResult(args[1], args[2], args[3], args[4]);
-                        return;
-                    }
-                    
-                    // Method 2: Check all recent events
-                    if (attempts % 3 === 0) {
-                        console.log("Checking all recent SpinResult events...");
-                        const allFilter = contract.filters.SpinResult(userAddress);
-                        const allEvents = await contract.queryFilter(allFilter, -500);
-                        
-                        for (const event of allEvents) {
-                            if (event.args[1].toString() === requestId.toString() && !resultFound) {
-                                console.log("✅ FOUND MATCHING EVENT IN BROADER SEARCH!");
+                        for (const event of events) {
+                            if (!resultFound) {
+                                const args = event.args;
+                                console.log("Checking event with requestId:", args[1].toString());
+                                
+                                // Process any SpinResult event for this user
+                                console.log("✅ FOUND SPINRESULT EVENT!");
                                 clearInterval(pollInterval);
                                 resultFound = true;
                                 
-                                const args = event.args;
+                                console.log("Event details:", {
+                                    requestId: args[1].toString(),
+                                    reward: ethers.formatEther(args[2]),
+                                    jpReward: ethers.formatEther(args[3]),
+                                    prizeIndex: args[4].toString()
+                                });
+                                
                                 handleSpinResult(args[1], args[2], args[3], args[4]);
                                 return;
                             }
                         }
+                    } catch (filterError) {
+                        console.error("Filter error, trying alternative method:", filterError.message);
+                        
+                        // Method 2: Check balance change as fallback
+                        const userData = await contract.users(userAddress);
+                        console.log("Current user data:", {
+                            spins: userData.spins.toString(),
+                            claimable: ethers.formatEther(userData.claimable)
+                        });
+                        
+                        // If we have pending spins and claimable > 0, we probably have a result
+                        if (userData.claimable > 0n && pendingSpins.size > 0) {
+                            console.log("✅ DETECTED BALANCE CHANGE - Searching for event...");
+                            
+                            // Try broader search
+                            try {
+                                const broadFilter = contract.filters.SpinResult();
+                                const allEvents = await contract.queryFilter(broadFilter, startBlock - 10, currentBlock);
+                                
+                                console.log(`Found ${allEvents.length} total SpinResult events`);
+                                
+                                // Find events for our user
+                                for (const event of allEvents) {
+                                    if (event.args[0].toLowerCase() === userAddress.toLowerCase() && !resultFound) {
+                                        console.log("✅ FOUND OUR EVENT!");
+                                        clearInterval(pollInterval);
+                                        resultFound = true;
+                                        
+                                        const args = event.args;
+                                        handleSpinResult(args[1], args[2], args[3], args[4]);
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Broad search failed:", e.message);
+                            }
+                        }
                     }
-                    
-                    // Show current balance
-                    const userData = await contract.users(userAddress);
-                    console.log("Current claimable:", ethers.formatEther(userData.claimable));
                     
                 } catch (error) {
                     console.error("Poll error:", error.message);
                 }
                 
                 if (attempts >= maxAttempts && !resultFound) {
-                    console.log("❌ POLLING TIMEOUT - No event found");
+                    console.log("❌ POLLING TIMEOUT");
                     clearInterval(pollInterval);
                     
                     // Stop animation
@@ -1760,42 +1778,19 @@
                         window.currentSpinInterval = null;
                     }
                     
-                    // Try one more manual check
-                    console.log("Attempting final manual event search...");
-                    try {
-                        const finalFilter = contract.filters.SpinResult(userAddress);
-                        const finalEvents = await contract.queryFilter(finalFilter, -1000);
-                        
-                        if (finalEvents.length > 0) {
-                            // Get the most recent event
-                            const latestEvent = finalEvents[finalEvents.length - 1];
-                            const args = latestEvent.args;
-                            
-                            console.log("Found event in final search:", {
-                                requestId: args[1].toString(),
-                                reward: ethers.formatEther(args[2]),
-                                jpReward: ethers.formatEther(args[3]),
-                                prizeIndex: args[4].toString()
-                            });
-                            
-                            handleSpinResult(args[1], args[2], args[3], args[4]);
-                            return;
-                        }
-                    } catch (e) {
-                        console.error("Final search error:", e);
+                    // Final check
+                    const userData = await contract.users(userAddress);
+                    if (userData.claimable > 0n) {
+                        showNotification("You have rewards! Check 'Your Rewards' section.", 'success');
+                    } else {
+                        showNotification("Result timeout. Use 'Check Events' to verify.", 'error');
                     }
                     
-                    // If still no event, show error
-                    const wheel = document.getElementById('wheel');
-                    wheel.style.transition = 'none';
-                    wheel.style.transform = 'rotate(0deg)';
-                    
-                    showNotification("Could not get result from Chainlink VRF. Please use 'Check Events' button.", 'error');
                     resetSpinButton();
                     updateAllData();
                 }
                 
-            }, 2000);
+            }, 1000); // Check every second
         }
         // Check recent events manually
         async function checkRecentEvents() {
@@ -1878,61 +1873,53 @@
                     showNotification(`You have ${ethers.formatEther(userData.claimable)} ETH to claim!`, 'success');
                 }
                 
-                // Get ALL SpinResult events
-                console.log("Searching for SpinResult events...");
-                const filter = contract.filters.SpinResult(userAddress);
-                const events = await contract.queryFilter(filter, -1000); // Last 1000 blocks
+                // Try different approaches to get events
+                console.log("Attempting to fetch SpinResult events...");
                 
-                console.log(`Found ${events.length} total SpinResult events`);
+                const currentBlock = await provider.getBlockNumber();
+                console.log("Current block:", currentBlock);
                 
-                if (events.length > 0) {
-                    // Show last 3 events
-                    const recentEvents = events.slice(-3);
-                    recentEvents.forEach((event, index) => {
-                        const args = event.args;
-                        const reward = ethers.formatEther(args[2]);
-                        const jpReward = ethers.formatEther(args[3]);
-                        const total = parseFloat(reward) + parseFloat(jpReward);
-                        
-                        console.log(`Event ${index + 1}:`, {
-                            blockNumber: event.blockNumber,
-                            requestId: args[1].toString(),
-                            reward: reward,
-                            jpReward: jpReward,
-                            totalWon: total.toFixed(6),
-                            prizeIndex: args[4].toString()
-                        });
-                    });
+                // Approach 1: Recent blocks with user filter
+                try {
+                    const filter = contract.filters.SpinResult(userAddress);
+                    const events = await contract.queryFilter(filter, currentBlock - 1000, currentBlock);
+                    console.log(`Approach 1: Found ${events.length} events with user filter`);
                     
-                    // Process the most recent event
-                    const latestEvent = events[events.length - 1];
-                    const args = latestEvent.args;
-                    const totalWon = parseFloat(ethers.formatEther(args[2])) + parseFloat(ethers.formatEther(args[3]));
+                    if (events.length > 0) {
+                        processFoundEvents(events);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Approach 1 failed:", e.message);
+                }
+                
+                // Approach 2: All SpinResult events in recent blocks
+                try {
+                    const filter = contract.filters.SpinResult();
+                    const events = await contract.queryFilter(filter, currentBlock - 100, currentBlock);
+                    console.log(`Approach 2: Found ${events.length} total SpinResult events`);
                     
-                    const confirmProcess = confirm(
-                        `Found last SpinResult:\n` +
-                        `Total Won: ${totalWon.toFixed(6)} ETH\n` +
-                        `Prize Index: ${args[4]}\n` +
-                        `Show this result on wheel?`
+                    // Filter for our user
+                    const userEvents = events.filter(e => 
+                        e.args[0].toLowerCase() === userAddress.toLowerCase()
                     );
                     
-                    if (confirmProcess) {
-                        // Stop any animation
-                        if (window.currentSpinInterval) {
-                            clearInterval(window.currentSpinInterval);
-                        }
-                        
-                        handleSpinResult(args[1], args[2], args[3], args[4]);
-                    }
-                } else {
-                    console.log("No SpinResult events found in last 1000 blocks");
+                    console.log(`Found ${userEvents.length} events for current user`);
                     
-                    // Try with a broader search
-                    console.log("Trying broader search...");
-                    const fromBlock = await provider.getBlockNumber() - 5000;
-                    const broaderEvents = await contract.queryFilter(filter, fromBlock);
-                    console.log(`Found ${broaderEvents.length} events in last 5000 blocks`);
+                    if (userEvents.length > 0) {
+                        processFoundEvents(userEvents);
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Approach 2 failed:", e.message);
                 }
+                
+                // Approach 3: Get transaction history
+                console.log("No events found. Checking recent transactions...");
+                
+                // If still nothing found
+                console.log("Unable to find SpinResult events. This might be due to RPC limitations.");
+                alert("No events found. If you have claimable balance, you can still claim it!");
                 
             } catch (error) {
                 console.error("Error in manual check:", error);
@@ -1940,6 +1927,73 @@
             }
         }
         
+        function processFoundEvents(events) {
+            console.log(`Processing ${events.length} events...`);
+            
+            // Show last 3 events
+            const recentEvents = events.slice(-3);
+            recentEvents.forEach((event, index) => {
+                const args = event.args;
+                const reward = ethers.formatEther(args[2]);
+                const jpReward = ethers.formatEther(args[3]);
+                const total = parseFloat(reward) + parseFloat(jpReward);
+                
+                console.log(`Event ${index + 1}:`, {
+                    blockNumber: event.blockNumber,
+                    requestId: args[1].toString(),
+                    reward: reward,
+                    jpReward: jpReward,
+                    totalWon: total.toFixed(6),
+                    prizeIndex: args[4].toString()
+                });
+            });
+            
+            // Process the most recent event
+            const latestEvent = events[events.length - 1];
+            const args = latestEvent.args;
+            const totalWon = parseFloat(ethers.formatEther(args[2])) + parseFloat(ethers.formatEther(args[3]));
+            
+            const confirmProcess = confirm(
+                `Found last SpinResult:\n` +
+                `Total Won: ${totalWon.toFixed(6)} ETH\n` +
+                `Prize Index: ${args[4]}\n` +
+                `Show this result on wheel?`
+            );
+            
+            if (confirmProcess) {
+                // Stop any animation
+                if (window.currentSpinInterval) {
+                    clearInterval(window.currentSpinInterval);
+                    window.currentSpinInterval = null;
+                }
+                
+                handleSpinResult(args[1], args[2], args[3], args[4]);
+            }
+        }
+        
+        // Alternative: Use WebSocket for better event listening (if available)
+        function setupWebSocketProvider() {
+            // Only use if you have a WebSocket endpoint
+            const wsEndpoint = 'wss://base-sepolia.g.alchemy.com/v2/YOUR_KEY';
+            if (wsEndpoint.includes('YOUR_KEY')) return;
+            
+            try {
+                const wsProvider = new ethers.WebSocketProvider(wsEndpoint);
+                const wsContract = new ethers.Contract(contractAddress, contractABI, wsProvider);
+                
+                // Listen for events via WebSocket
+                wsContract.on("SpinResult", (player, requestId, reward, jpReward, prizeIndex) => {
+                    console.log("WS Event received!");
+                    if (player.toLowerCase() === userAddress.toLowerCase()) {
+                        handleSpinResult(requestId, reward, jpReward, prizeIndex);
+                    }
+                });
+                
+                console.log("WebSocket listener setup complete");
+            } catch (error) {
+                console.error("WebSocket setup failed:", error);
+            }
+        }
         // Show notification
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
