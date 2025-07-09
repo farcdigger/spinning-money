@@ -1,69 +1,4 @@
-// Update all data - FIXED VERSION
-        async function updateAllData() {
-            if (!contract || !userAddress) return;
-            
-            try {
-                // Get user data from V3 contract
-                let userData;
-                try {
-                    userData = await contract.users(userAddress);
-                    console.log("User data:", userData);
-                } catch (error) {
-                    console.error("users() failed:", error);
-                    userData = { spins: 0n, claimable: 0n, claimed: 0n };
-                }
-                
-                const { spins, claimable, claimed } = userData;
-
-                // Update user stats
-                document.getElementById('totalSpins').textContent = spins.toString();
-                document.getElementById('totalWins').textContent = '-'; // V3 doesn't track win count
-                document.getElementById('winRate').textContent = '-'; // V3 doesn't track win rate
-                
-                // Calculate total wagered (0.0005 ETH per spin)
-                const spinPrice = 500000000000000n; // 0.0005 ETH in wei
-                const totalWagered = spins * spinPrice;
-                document.getElementById('totalWagered').textContent = formatEther(totalWagered);
-                document.getElementById('totalClaimed').textContent = formatEther(claimed);
-
-                // Update pending rewards
-                const pendingEth = ethers.formatEther(claimable);
-                document.getElementById('pendingReward').textContent = pendingEth + ' ETH';
-                
-                // Show/hide claim section
-                if (claimable > 0n) {
-                    document.getElementById('claimSection').style.display = 'block';
-                    document.getElementById('noRewardsText').style.display = 'none';
-                } else {
-                    document.getElementById('claimSection').style.display = 'none';
-                    document.getElementById('noRewardsText').style.display = 'block';
-                }
-
-                // Get pool data
-                let prizePool = 0n;
-                let jackpotPool = 0n;
-                
-                try {
-                    prizePool = await contract.prizePool();
-                    jackpotPool = await contract.jackpotPool();
-                    console.log("Prize pool:", ethers.formatEther(prizePool), "ETH");
-                    console.log("Jackpot pool:", ethers.formatEther(jackpotPool), "ETH");
-                } catch (error) {
-                    console.error("Pool data failed:", error);
-                }
-
-                // Update pool displays
-                const totalPool = prizePool + jackpotPool;
-                document.getElementById('prizePool').textContent = formatEther(totalPool);
-                
-                // Update pool breakdown
-                document.getElementById('poolBreakdown').textContent = 
-                    `Prize: ${formatEther(prizePool)} | Jackpot: ${formatEther(jackpotPool)}`;
-
-            } catch (error) {
-                console.error('Update error:', error);
-            }
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1466,134 +1401,92 @@
             console.log("Spin animation started with interval");
         }
 
-        // Handle spin result - ACCURATE VERSION
+        // Handle spin result - IMMEDIATE STOP VERSION
         async function handleSpinResult(requestId, reward, jpReward, prizeIndex) {
-            console.log("=== HANDLING SPIN RESULT ===", {
+            console.log("=== HANDLING SPIN RESULT - IMMEDIATE STOP ===", {
                 requestId: requestId.toString(),
                 reward: ethers.formatEther(reward),
                 jpReward: ethers.formatEther(jpReward),
                 prizeIndex: prizeIndex.toString()
             });
             
-            // Stop spinning animation
+            // IMMEDIATELY stop spinning animation
             if (window.currentSpinInterval) {
                 clearInterval(window.currentSpinInterval);
                 window.currentSpinInterval = null;
-                console.log("Stopped spin animation");
             }
             
             const wheel = document.getElementById('wheel');
             
+            // Get current rotation to make smooth transition
+            const currentTransform = window.getComputedStyle(wheel).transform;
+            let currentRotation = 0;
+            if (currentTransform !== 'none') {
+                const values = currentTransform.split('(')[1].split(')')[0].split(',');
+                const a = parseFloat(values[0]);
+                const b = parseFloat(values[1]);
+                currentRotation = Math.round(Math.atan2(b, a) * (180/Math.PI));
+                if (currentRotation < 0) currentRotation += 360;
+            }
+            
             // Convert prizeIndex to number
             const prizeIndexNum = typeof prizeIndex === 'bigint' ? Number(prizeIndex) : prizeIndex;
             
-            // Map prizeIndex to EXACT wheel position based on contract
+            // Map prizeIndex to EXACT wheel position
             let wheelPosition;
             let prizeName;
             
-            // Contract prize mapping:
-            // 0: 0.05 ETH (1‰)
-            // 1: 0.01 ETH (2‰)
-            // 2: 0.005 ETH (5‰)
-            // 3: 0.0025 ETH (10‰)
-            // 4: 0.0005 ETH (50‰)
-            // 5: 0.00005 ETH (200‰)
-            // 6,7,8: Try Again (244‰ each)
-            
             switch(prizeIndexNum) {
-                case 0: // 0.05 ETH = JACKPOT
-                    wheelPosition = 9;
-                    prizeName = "JACKPOT (0.05 ETH)";
-                    break;
-                case 1: // 0.01 ETH = DIAMOND
-                    wheelPosition = 8;
-                    prizeName = "DIAMOND (0.01 ETH)";
-                    break;
-                case 2: // 0.005 ETH = GOLD
-                    wheelPosition = 6;
-                    prizeName = "GOLD (0.005 ETH)";
-                    break;
-                case 3: // 0.0025 ETH = SILVER
-                    wheelPosition = 5;
-                    prizeName = "SILVER (0.0025 ETH)";
-                    break;
-                case 4: // 0.0005 ETH = BRONZE
-                    wheelPosition = 4;
-                    prizeName = "BRONZE (0.0005 ETH)";
-                    break;
-                case 5: // 0.00005 ETH = MINI
-                    wheelPosition = 3;
-                    prizeName = "MINI (0.00005 ETH)";
-                    break;
-                case 6: // Try Again 1
-                    wheelPosition = 0;
-                    prizeName = "TRY AGAIN";
-                    break;
-                case 7: // Try Again 2
-                    wheelPosition = 1;
-                    prizeName = "TRY AGAIN";
-                    break;
-                case 8: // Try Again 3
-                    wheelPosition = 2;
-                    prizeName = "TRY AGAIN";
-                    break;
-                default:
-                    // Fallback for unexpected values
-                    wheelPosition = 7; // Try Again position
-                    prizeName = "TRY AGAIN";
-                    console.error("Unexpected prize index:", prizeIndexNum);
+                case 0: wheelPosition = 9; prizeName = "JACKPOT (0.05 ETH)"; break;
+                case 1: wheelPosition = 8; prizeName = "DIAMOND (0.01 ETH)"; break;
+                case 2: wheelPosition = 6; prizeName = "GOLD (0.005 ETH)"; break;
+                case 3: wheelPosition = 5; prizeName = "SILVER (0.0025 ETH)"; break;
+                case 4: wheelPosition = 4; prizeName = "BRONZE (0.0005 ETH)"; break;
+                case 5: wheelPosition = 3; prizeName = "MINI (0.00005 ETH)"; break;
+                case 6: wheelPosition = 0; prizeName = "TRY AGAIN"; break;
+                case 7: wheelPosition = 1; prizeName = "TRY AGAIN"; break;
+                case 8: wheelPosition = 2; prizeName = "TRY AGAIN"; break;
+                default: wheelPosition = 7; prizeName = "TRY AGAIN"; break;
             }
             
-            console.log(`Prize Index ${prizeIndexNum} => ${prizeName} at wheel position ${wheelPosition}`);
+            console.log(`IMMEDIATE: Prize Index ${prizeIndexNum} => ${prizeName} at position ${wheelPosition}`);
             
-            // Calculate final rotation
-            const targetDegrees = wheelPosition * 36; // Each segment is 36 degrees
-            const spins = 5; // 5 full rotations for effect
-            const finalRotation = (spins * 360) + targetDegrees;
+            // Calculate shortest path to target
+            const targetDegrees = wheelPosition * 36;
+            const currentNormalized = currentRotation % 360;
             
-            // Apply final rotation with smooth animation
-            wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            // Add 2-3 more spins for effect
+            const additionalSpins = 2;
+            const finalRotation = currentRotation + (additionalSpins * 360) + (targetDegrees - currentNormalized + 360) % 360;
+            
+            // IMMEDIATE animation to final position
+            wheel.style.transition = 'transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
             wheel.style.transform = `rotate(${finalRotation}deg)`;
             
-            console.log(`Animating wheel to ${finalRotation} degrees (position ${wheelPosition})`);
+            // Show result IMMEDIATELY
+            const mainReward = ethers.formatEther(reward);
+            const jackpotReward = ethers.formatEther(jpReward);
+            const totalReward = parseFloat(mainReward) + parseFloat(jackpotReward);
             
-            // Show results after animation completes
-            setTimeout(() => {
-                const mainReward = ethers.formatEther(reward);
-                const jackpotReward = ethers.formatEther(jpReward);
-                const totalReward = parseFloat(mainReward) + parseFloat(jackpotReward);
-                
-                console.log("Final result:", {
-                    mainReward,
-                    jackpotReward,
-                    totalReward,
-                    prizeName,
-                    prizeIndex: prizeIndexNum
-                });
-                
-                // Show result in notification
-                if (totalReward > 0) {
-                    let message = `🎉 YOU WON ${totalReward.toFixed(6)} ETH!`;
-                    if (parseFloat(mainReward) > 0 && parseFloat(jackpotReward) > 0) {
-                        message += ` (${prizeName} + Jackpot Bonus)`;
-                    } else {
-                        message += ` (${prizeName})`;
-                    }
-                    showNotification(message, 'success');
+            // Immediate notification
+            if (totalReward > 0) {
+                let message = `🎉 YOU WON ${totalReward.toFixed(6)} ETH!`;
+                if (parseFloat(mainReward) > 0 && parseFloat(jackpotReward) > 0) {
+                    message += ` (${prizeName} + Jackpot Bonus)`;
                 } else {
-                    showNotification(`😢 ${prizeName} - Better luck next time!`, 'info');
+                    message += ` (${prizeName})`;
                 }
-                
-                // Show modal with accurate data
+                showNotification(message, 'success');
+            } else {
+                showNotification(`😢 ${prizeName} - Better luck next time!`, 'info');
+            }
+            
+            // Show modal after wheel stops (2 seconds)
+            setTimeout(() => {
                 showResultModalV3(mainReward, jackpotReward, prizeIndexNum);
-                
-                // Reset button
                 resetSpinButton();
-                
-                // Update balances
                 updateAllData();
-                
-            }, 4100);
+            }, 2100);
         }
 
         // Animate wheel to position
@@ -1623,7 +1516,7 @@
             spinBtn.textContent = 'SPIN NOW';
         }
 
-        // Show result modal for V3
+        // Show result modal for V3 - ACCURATE VERSION
         function showResultModalV3(mainReward, jackpotReward, prizeIndex) {
             const modal = document.getElementById('resultModal');
             const title = document.getElementById('resultTitle');
@@ -1634,25 +1527,35 @@
             const jackpotRewardNum = parseFloat(jackpotReward);
             const totalReward = mainRewardNum + jackpotRewardNum;
             
+            // Get prize name based on index
+            let prizeName;
+            switch(prizeIndex) {
+                case 0: prizeName = "JACKPOT (0.05 ETH)"; break;
+                case 1: prizeName = "DIAMOND (0.01 ETH)"; break;
+                case 2: prizeName = "GOLD (0.005 ETH)"; break;
+                case 3: prizeName = "SILVER (0.0025 ETH)"; break;
+                case 4: prizeName = "BRONZE (0.0005 ETH)"; break;
+                case 5: prizeName = "MINI (0.00005 ETH)"; break;
+                default: prizeName = "TRY AGAIN"; break;
+            }
+            
             if (totalReward > 0) {
                 title.textContent = '🎉 Winner!';
                 title.style.color = '#4CAF50';
                 amount.textContent = totalReward.toFixed(6) + ' ETH';
                 
-                let detailText = '';
-                if (mainRewardNum > 0) {
-                    detailText += `Prize: ${mainReward} ETH`;
-                }
-                if (jackpotRewardNum > 0) {
-                    if (detailText) detailText += ' + ';
-                    detailText += `Jackpot: ${jackpotReward} ETH`;
+                let detailText = `You hit: ${prizeName}`;
+                if (mainRewardNum > 0 && jackpotRewardNum > 0) {
+                    detailText = `Prize: ${mainReward} ETH + Jackpot Bonus: ${jackpotReward} ETH`;
+                } else if (jackpotRewardNum > 0) {
+                    detailText = `Jackpot Bonus: ${jackpotReward} ETH`;
                 }
                 details.textContent = detailText;
             } else {
                 title.textContent = '😢 Try Again!';
                 title.style.color = '#f44336';
                 amount.textContent = '0 ETH';
-                details.textContent = 'Better luck next time!';
+                details.textContent = `You hit: ${prizeName}`;
             }
             
             modal.style.display = 'flex';
