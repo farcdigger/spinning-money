@@ -898,16 +898,19 @@
         // Base Sepolia Testnet Configuration
         const BASE_SEPOLIA_CHAIN_ID = '0x14a34'; // 84532 in hex
         
-        // Base Sepolia RPC endpoints
+        // IMPORTANT: Alchemy WebSocket URL for real-time events
+        const ALCHEMY_WS_URL = 'wss://base-sepolia.g.alchemy.com/v2/JfnVnW2YpUqElEL7WqWBt-1gKf5Z8bJr';
+        
+        // Base Sepolia RPC endpoints (Alchemy HTTP endpoint added)
         const BASE_SEPOLIA_RPCS = [
+            'https://base-sepolia.g.alchemy.com/v2/JfnVnW2YpUqElEL7WqWBt-1gKf5Z8bJr',
             'https://sepolia.base.org',
             'https://base-sepolia-rpc.publicnode.com',
-            'https://base-sepolia.gateway.tenderly.co',
-            'https://base-sepolia.blockpi.network/v1/rpc/public'
+            'https://base-sepolia.gateway.tenderly.co'
         ];
         
-        // Rastgele bir RPC seç (yük dağıtımı için)
-        const BASE_SEPOLIA_RPC = BASE_SEPOLIA_RPCS[Math.floor(Math.random() * BASE_SEPOLIA_RPCS.length)];
+        // Use Alchemy as primary RPC
+        const BASE_SEPOLIA_RPC = BASE_SEPOLIA_RPCS[0];
         
         // Contract ABI - SpinAndWinV3
         const contractABI = [
@@ -937,6 +940,9 @@
         ];   
             
         
+        // Alchemy WebSocket endpoint - BURAYA API KEY'İNİZİ YAPIŞTIRIN
+        const ALCHEMY_WS_URL = 'wss://base-sepolia.g.alchemy.com/v2/YOUR_API_KEY_HERE';
+        
         // Contract address - SpinAndWinV3 on Base Sepolia
         const contractAddress = "0x7f81701bd33316dbe4c2aa508e1640dcd4d2e859"; 
 
@@ -947,6 +953,10 @@
         let isSpinning = false;
         let currentSpinCount = 1;
         let pendingSpins = new Map();
+        
+        // WebSocket variables
+        let wsProvider = null;
+        let wsContract = null;
 
         // Initialize
         window.addEventListener('load', () => {
@@ -1098,6 +1108,9 @@
 
                 // Setup event listeners
                 setupEventListeners();
+                
+                // Setup WebSocket connection if available
+                setupWebSocketConnection();
 
                 // Load initial data
                 await updateAllData();
@@ -1334,8 +1347,15 @@
                     }
                     
                     if (requestId) {
-                        // Start checking for result
-                        startResultPolling(requestId);
+                        // Start checking for result only if WebSocket is not connected
+                        if (!wsProvider || wsProvider._websocket.readyState !== WebSocket.OPEN) {
+                            console.log("WebSocket not available, starting HTTP polling...");
+                            startResultPolling(requestId);
+                        } else {
+                            console.log("WebSocket is connected, waiting for WS event...");
+                            // Just wait for WebSocket event
+                            showNotification("Waiting for Chainlink VRF result via WebSocket...", 'info');
+                        }
                     }
                 }
                 
@@ -1971,27 +1991,93 @@
             }
         }
         
-        // Alternative: Use WebSocket for better event listening (if available)
-        function setupWebSocketProvider() {
-            // Only use if you have a WebSocket endpoint
-            const wsEndpoint = 'wss://base-sepolia.g.alchemy.com/v2/YOUR_KEY';
-            if (wsEndpoint.includes('YOUR_KEY')) return;
+        // Setup WebSocket connection for better event listening
+        function setupWebSocketConnection() {
+            // Check if WebSocket URL is configured
+            if (!ALCHEMY_WS_URL || ALCHEMY_WS_URL.includes('YOUR_API_KEY_HERE')) {
+                console.log("WebSocket URL not configured. Using HTTP polling instead.");
+                return;
+            }
             
             try {
-                const wsProvider = new ethers.WebSocketProvider(wsEndpoint);
-                const wsContract = new ethers.Contract(contractAddress, contractABI, wsProvider);
+                console.log("Setting up WebSocket connection...");
                 
-                // Listen for events via WebSocket
-                wsContract.on("SpinResult", (player, requestId, reward, jpReward, prizeIndex) => {
-                    console.log("WS Event received!");
+                // Create WebSocket provider
+                wsProvider = new ethers.WebSocketProvider(ALCHEMY_WS_URL);
+                
+                // Create contract instance with WebSocket provider
+                wsContract = new ethers.Contract(contractAddress, contractABI, wsProvider);
+                
+                // Setup WebSocket event listeners
+                console.log("Setting up WebSocket event listeners...");
+                
+                // Listen for SpinStarted events
+                wsContract.on("SpinStarted", (player, requestId) => {
+                    console.log("🔥 WS SpinStarted event:", {
+                        player: player,
+                        requestId: requestId.toString()
+                    });
+                    
                     if (player.toLowerCase() === userAddress.toLowerCase()) {
+                        // Animation already started by HTTP event
+                        console.log("WS: Spin confirmed for our user");
+                    }
+                });
+                
+                // Listen for SpinResult events - THIS IS THE IMPORTANT ONE
+                wsContract.on("SpinResult", (player, requestId, reward, jpReward, prizeIndex) => {
+                    console.log("🎉 WS SpinResult event received!", {
+                        player: player,
+                        requestId: requestId.toString(),
+                        reward: ethers.formatEther(reward),
+                        jpReward: ethers.formatEther(jpReward),
+                        prizeIndex: prizeIndex.toString()
+                    });
+                    
+                    if (player.toLowerCase() === userAddress.toLowerCase()) {
+                        console.log("✅ WS: Result is for our user! Processing...");
+                        
+                        // Clear any polling intervals
+                        clearAllPollingIntervals();
+                        
+                        // Handle the result immediately
                         handleSpinResult(requestId, reward, jpReward, prizeIndex);
                     }
                 });
                 
-                console.log("WebSocket listener setup complete");
+                // Monitor WebSocket connection
+                wsProvider.on("error", (error) => {
+                    console.error("WebSocket error:", error);
+                });
+                
+                wsProvider.on("network", (newNetwork, oldNetwork) => {
+                    if (oldNetwork) {
+                        console.log("WebSocket network changed from", oldNetwork, "to", newNetwork);
+                    }
+                });
+                
+                // Test the connection
+                wsProvider.getBlockNumber().then(blockNumber => {
+                    console.log("✅ WebSocket connected! Current block:", blockNumber);
+                }).catch(error => {
+                    console.error("WebSocket connection test failed:", error);
+                });
+                
+                console.log("WebSocket setup complete!");
+                
             } catch (error) {
-                console.error("WebSocket setup failed:", error);
+                console.error("Failed to setup WebSocket:", error);
+                console.log("Falling back to HTTP polling");
+            }
+        }
+        
+        // Helper function to clear all polling intervals
+        function clearAllPollingIntervals() {
+            // Clear any existing polling intervals
+            for (let i = 1; i < 99999; i++) {
+                if (window[`pollInterval${i}`]) {
+                    clearInterval(window[`pollInterval${i}`]);
+                }
             }
         }
         // Show notification
